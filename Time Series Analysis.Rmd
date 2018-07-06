@@ -1,0 +1,173 @@
+---
+title: "Time Series Analysis"
+author: "KM"
+date: "2018年7月4日"
+output: html_document
+---
+
+# Section 1
+## LEcture 3: Main Functions
+
+(1) Basic functions in R Base are:
+- decompose()
+- stl()
+- arima()
+- HolWinters()
+- acf(), pacf()
+- plot()
+- ts()
+
+(2) Add-on package - `forecast` package
+```{r}
+# package load
+library(forecast)
+library(ggplot2)
+```
+
+### Forecast structure 
+Function `forecast()` + standard model = Forecasting
+
+Standar model is (1) ARIMA, (2) Sesonal decomposition, (3) Exponential smoothing, and (4) simple models (e.g., naive mean).
+
+Forecasting Results are always in the same structure regardless of the model(which are different from function `predict()`).
+
+In the `Forecast` library, automatic parameter selection is available both for the ARIMA model and the exponential smoothing. 
+
+### ARIMA models in Library `Forecast`
+auto.arima(time_series) -> most suitable ARIMA model
+`auto.arima` sets the complexity with the arguments `stepwise` and `approximation`. WE can get a list of possible models, as well as the information criteria.
+
+Arima(time_series)
+we could set the parameters manually (manual parameter selecion). In the manual selection, we look fro autocorrelation based on the `acf()` and `pacf()` plots. we adjust the model by `time_series` - `lags` until no more autocorrelation.
+
+### Exponential smooothing in Library `Forecast`
+Automatic function - `ets()`
+manual functions: `ses()`, `hw()`, `holt()`
+
+### Plotting with Library `Forrecast`
+
+R Base Plots:
+- `plot()`
+- `monthplot()`
+- `seasonplot()`
+
+ggplot2 plots:
+- `autoplot()`
+- `ggmothplot()`
+- `ggseasonplot()`
+
+### Model comparison with Library `Forecast`
+`accruacy()`
+getting the model accuracy with a training and a test set.
+
+`tsCV()`
+time series cross validation for small datasets.
+
+### Other packages 
+we would use `getSymbols()`, `quantmod()` and `xts()` packages.
+```{r}
+install.packages("quantmod")
+install.packages("xts")
+```
+
+## Lecture 4: Supporting Resources
+R Time series Task View 
+curated by Rob Hyndman (Blog on Otexts.org)
+https://robjhyndman.com/
+
+Vignetts 
+some packages come with vignettes (description, PDF)
+
+Free e-Books "Forecasting: Principles and Practice"
+https://otexts.org/fpp2/index.html
+https://robjhyndman.com/seminars/uwa2017/
+
+R Community on Stackoverflow.com
+https://stackoverflow.com/questions/tagged/r
+
+## Lecture 5: Course Link List
+Time Series Task View:
+https://cran.r-project.org/web/views/TimeSeries.html
+
+Blog, Ebook and Forecast Documentation by Rob Hyndman:
+https://otexts.org/fpp2/intro.html
+
+Stackoverflow Community:
+https://stackoverflow.com/questions
+
+Singapur Data of Project I:
+https://docs.google.com/spreadsheets/d/1frieoKODnD9sX3VCZy5c3QAjBXMY-vN7k_I9gR-gcU8/pub
+http://www.gapminder.org/data/
+
+German Inflation Data of Project II:
+https://www.statbureau.org/en/germany/inflation-tables
+
+# Section 2: Project I Trending Data:Singapur Labor Force Participation Rate
+## LEcture 6: Importing the data
+
+Uneployment rate
+- Used for propaganda purposes
+- Easy to manipulate
+- Who is unemployed?
+- Who doesn't show up in the metric?
+
+Labor Force Participatin Rate
+- Harder to manipulate
+- Ratio of people in the work force vs available people of a particular age range
+- Factors for manipulation /bias
+https://www.gapminder.org/data/
+
+We need to compara things that are the same or similar level. Unbalanced comparisons require well thought out methodology to adjust for a mismatch. 
+```{r}
+
+# package load
+library(forecast)
+library(ggplot2)
+library(quantmod)
+library(xts)
+
+# Import with scan
+singapur=scan()
+# 70.19999695	71.09999847	71.69999695	72.30000305	73.09999847	72.90000153	74.40000153	75.40000153	76	76.90000153	77.40000153	78.19999695	78.90000153	78.69999695	79	78	80	79.80000305	80.30000305	80.5	80.69999695	81.09999847	81.5	81.90000153	82.30000305	82.69999695	83.19999695	83.5
+
+singapur
+# item 28 are shown by this code 
+
+singapur <- ts(singapur,start=1980)
+plot(singapur,ylab="Labor Force Participation Rate")
+```
+
+From the above chart, the possible models are:
+- ARIMA
+- Holt linear trend method
+
+However, one feature of this data is that the values cannnot exceed 100% in the model.There needs to be some press hold. Holt method has a nice damping parameter (holt()).
+
+## Lecture 7: Mission Statement
+
+- How to handle time series with trend?
+- Which methods are available?
+- What are the pitfalls?
+- How to visualize time series data?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
