@@ -1,10 +1,13 @@
 # Udemy Courses
 
-R Level 1 - EY Badge Blonze
+1. R Level 1 - EY Badge Blonze
 From 2018 January
 
-Data Science and Machine Learning Bootcamp in R
+2. Data Science and Machine Learning Bootcamp in R
 From 2018 February to April
 
-R for Data Science
-From 2018 April to Current
+3. R for Data Science
+From 2018 April to July
+
+4. Applied time series analysis 
+From 2018 July - 
