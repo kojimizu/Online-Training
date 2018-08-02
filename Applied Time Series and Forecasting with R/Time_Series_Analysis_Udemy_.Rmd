@@ -778,7 +778,7 @@ Workplan
 Quantiative Financial Modeling Framework
 - install and activate the package `quantmod`
 ```{r}
-# install.packages("quantmod")
+install.packages("quantmod")
 library(quantmod)
 ```
 
@@ -798,18 +798,13 @@ library(quantmod)
 #     #stock symbol - ticker for Novartis stock
 #     # scraping more than one stock, symbol=c("","")
 #     auto.assign = F,
-#     # assign an object name automatically - FALSE for manual assignemnt of single stack, while scraping multiple stocks this must be TRUE
+#     # assign an object name automatically - FALSE for manual assignemnt of single stack, while scraping multiple stocks this must be TRUE 
 #     from="2015-01-01",
 #     to="2016-01-01")
-
-novartis = getSymbols("NVS", auto.assign=F, 
-                   from = "2015-01-01", to = "2016-01-01")
-
-sessionInfo()
-getSymbols("AAPL")
-getSymbols("OIH", src = "yahoo", auto.assign=FALSE)[,1:5]
-w <- curl::curl_fetch_memory("https://finance.yahoo.com",curl::new_handle(verbose=TRUE))
-
+# 
+# novartis = getSymbols("NVS", auto.assign=F, 
+#                   from = "2015-01-01", to = "2016-01-01")
+# 
 # View(novartis)
 ```
 
@@ -829,254 +824,22 @@ plot(as.ts(novartis$NVS.Open))
 ```
 
 
-## Lecture 24: Exploring the data
+## Lecture : Exploring the data
 
 Getting started with irregular spaced time series data, most time series functions and models don't work effectively on irregularly spaed data. Some teqniques help to get a basic ide about the data even if irregulaly spaced.
 
-The first option is plot the data
-```{r}
-# activate quantmod library
-library(quantmod)
-
-# Function chartSeries() for plotting quantmod derived financial time series data 
- # data = time series data
- # type = chart type ("auto","line","bars","candlesticks","matchsticks")
-chartSeries(data=novartis,type="line")
-
-# ac and pacf to get an idea about auto-
-library(forecast)
-ggtsdisplay(novartis$NVS.Open)
-```
-
-```{r} 
-# ARIMA model
-novartisarima = auto.arima(novartis$NVS.Open,
-                           stepwise=T,
-                           approximation=F,
-                           trace=T);novartisarima
-# ARIMA (0,1,1) is obtained - data seems randomly distributed
-# AIC=895, several models were tested and AIC of the optimal model is minimal
-
-# Alternative ARIMA with autogregressive part
-novartisarima2 = Arima(novartis$NVS.Open,order=c(1,1,1))
-novartisarima2
-```
 
 
-```{r}
-# Forecast arima
-plot(forecast(novartisarima,h=20))
-plot(forecast(novartisarima2,h=20))
-```
-
-The feature of the above optimal model's plot is;
-- MA (moving average) with short window
-- Almost like an LOCF (last observation carried foward) model
-- No clear trend
-- No seasonality
-
-When we see the alternative **ARIMA** model, it is not that different. The ARIMA models assume that the last observation is indicative of the next one. Prior obsevations don't matter much.
-
-Then, we construct a **ETS(exponential smooothing)** model for Novatis stock data. It does not look different, the model is based on M (multipled initial level), no trend nor seasonality, several of the last observations are considered. 
-```{r}
-# ETS model
-novartisets = ets(novartis$NVS.Open)
-# Forecast model
-plot(novartisets, h=20)
-```
-
-As a conclusion, clear and actionable patterns are hard to extract.Tiny advantages=tiny gains, going deeper with the analysis
-1) Is there a difference in the day of the week?
-2) Are rises expected on a specific week day?
-3) Which months are the most promising ones for certain strategies?
-
-For the above things, pre-processing is required to answer those type of question, and converted to regular time series data.
-
-## Lecture 25: Project III Script
-```{r}
-# Fetching data from yahoo with quantmod
-library(quantmod)
-
-novartis = getSymbols("NVS", auto.assign=F, 
-                  from = "2015-01-01", to = "2016-01-01")
-# use argument return.class to modify output class to ts or mts
-
-## using a column like a standard ts
-plot(as.ts(novartis$NVS.Open))
-
-# functions to explore unprocessed xts from quantmod
-chartSeries(novartis, type = "line")
-
-# acf and pacf to get an idea about autocorrelation
-library(forecast)
-ggtsdisplay(novartis$NVS.Open)
-
-# Arima model
-novartisarima = auto.arima(novartis$NVS.Open, 
-                           stepwise = T, 
-                           approximation = F, 
-                           trace = T); novartisarima
-
-# Alternative arima with autoregressive part 
-novartisarima2 = Arima(novartis$NVS.Open, order = c(1,1,1))
-novartisarima2
-
-# Forecast arima
-plot(forecast(novartisarima, h = 20))
-plot(forecast(novartisarima2, h = 20))
-
-# Ets model
-novartisets = ets(novartis$NVS.Open)
-
-# Forecast ets
-plot(forecast(novartisets, h = 20))
-
-## Getting a regular time series
-
-# Conversion to dataframe
-novartis = as.data.frame(novartis)
-
-### Adding the rownames as date
-novartis$Date = rownames(novartis)
-novartis$Date = as.Date(novartis$Date)
-head(novartis)
-
-# Creating the date column, 'by' can be either nr days or integer
-# 'from' and 'to' with as.Date to make sure this is a date format
-mydates = seq.Date(from = as.Date("2015-01-01"), 
-                to = as.Date("2016-01-01"), 
-                by = 1)
-
-# Converting to a df (required for the merge)
-mydates = data.frame(Date = mydates)
-
-# Padding with 'mydates'
-mydata = merge(novartis, mydates, by = "Date", all.y = T)
-
-# Removing initial days to start on monday
-mydata = mydata[5:366,]
-
-# Removing sundays, watch the from as the first one to remove
-mydata = mydata[-(seq(from = 7, to = nrow(mydata), by = 7)),]
-# Removing saturdays
-mydata = mydata[-(seq(from = 6, to = nrow(mydata), by = 6)),]
-
-# Using last observatoin carried forward imputation
-mydata = na.locf(mydata)
-
-## Which days are the ones best to buy or sell?
-
-# Putting the closeprice into a weekly time series
-highestprice = ts(as.numeric(mydata$NVS.High), 
-                  frequency = 5)
-
-# Various plots
-seasonplot(highestprice, season.labels = c("Mon", "Tue", "Wed", "Thu", "Fri"))
-monthplot(highestprice)
-monthplot(highestprice, base = median, col.base = "red")
-plot(stl(highestprice, s.window = "periodic"))
-
-# Comparison with the low prices
-par(mfrow = c(1,2))
-lowestprice = ts(as.numeric(mydata$NVS.Low), 
-                 frequency = 5)
-monthplot(lowestprice, base = median, col.base = "red")
-monthplot(highestprice, base = median, col.base = "red")
-par(mfrow = c(1,1))
-```
-
-## Lecture 26: Getting a Regular Time Series
-
-1) Data vs Analytical Goals
-- Irregularly spaced data 
-e.g., Holidays and weekends are missing, US traiding days only
-- Analytical questions
-e.g., Is there any pattern in the trading days?
-
-2) Conveting the data into the Regularly spaced time series 
-(A) Convert the original data into a data frame, and (B) Create a second data.frame with a calender days result in merging both data frames to the *regular spaced time series with NAs*
 
 
-### Conversion to a data frame
-```{r}
-novartis=as.data.frame(novartis)
-```
 
 
-### Add the row names as date
-```{r}
-novartis %>% 
-  mutate(Date=rownames(novartis)) %>% 
-  as.Date(Date)
-head(novartis)
-```
 
 
-- Name of the object to be created
-- Sequence of data values
-- Parameters "from" and "to" to specify the time window
- - data class=as.Date("")
-- Parameter "by" to specify the step size
 
-```{r}
-# creating the date column, "by" can be either nr days or 
-# "from" and "to" with as.Date to make sure this is a date 
 
-mydates=
-seq.Date(
-  from=as.Date("2015-01-01"),
-  to=as.Date("2016-01-01"),
-  by=1)
 
-# converting to a df(tibble)
-library(tidyverse)
-mydates=tibble(Date=mydates)
-```
 
-### Padding with "mydates" by `merge()`
-- merting the two data frames
-- identifying missing dates and marking them as NA
-- Name of the new data frame
-- Merging function of R Base (alternatively, join functions from `dplyr` package)
- - First object(X)
- - Second object(Y)
-- Name of the column to merge by
-- All rows of object Y get included
- - Results in a full join of the two data frames
- 
-```{r}
-mydata = merge(novartis, mydates,by="Date",all.y=T)
-```
-
-### Removing initial days to start on Monday
- - removing Saturdays and Sundays
- - Impute holiday prices with `na.locf()`
- 
- First of all subset the data
-```{r}
-mydata=mydata[5:366,]
-
-# Removing Sundays, watch the from 
-mydata <- 
-# Removing Saturday
-mydata <- 
-  
-```
-
-For the above Holiday extraction, we use seq()
-- substracte the sequence from mydata
-- sequence generation function of R base: `seq()`
-- `Form` = the first observation to be removed
-- `To`= the last observation of the dataset
-```{r}
-mydata =
-  mydata[-(
-    seq(
-      from=7,
-      to=nrow(mydata),
-      by=7)),]
-```
-  
 
 
 
