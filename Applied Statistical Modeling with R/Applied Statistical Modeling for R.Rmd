@@ -1,0 +1,2256 @@
+---
+title: "Applied Data Science"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+# Section 2: The essentials of the R Programming Language
+## Lecture 9: Different Data Structures
+
+Vectors:
+- Most coomon type of data storage structure (1D and can store numbers, strongs and logical operators)
+
+Matrix:
+- 2D data structure which stores data in the form of rows and columns. All the values need to be of the same type
+
+Data Frame:
+- 2D data storage structure comprising of vectors of same length. Unlike a matrix, the columns can contain data of different types.
+
+Data types are numeric(numbers), strings(word), logical, factors (represent categorical variables using numbers).
+```{r Vectors}
+x=c(1,12,30,54,5)
+length(x)
+typeof(x)
+x[1]
+
+# add another value
+x=c(x,8)
+
+# character vector
+x=c(x,"cat")
+typeof(x)
+typeof(x[1:3])
+
+# sequence of numbers
+x <- seq(1:10)
+y <- rep(seq(1:10),3)
+
+# sequential vector
+y=seq(1,10,by=2)
+
+library(magrittr)
+y %>% as.integer() %>% typeof()
+```
+
+```{r matrix}
+# matrix: 2D vector
+m <- matrix(1:6,nrow=2,ncol=3) %>% print()
+
+x <- 1:4
+y <- 10:13
+z <- cbind(x,y)
+# join of the basis of columns
+# all columns should have same number of rows
+
+nrow(z)
+ncol(z)
+```
+
+```{r Data Frame}
+df1=as.data.frame(z) %>% clas
+
+# dataset available in package
+library(datasets)
+data(package='datasets')
+
+data(ChickWeight)
+str(ChickWeight)
+head(ChickWeight)
+
+# factors represent categorical variables using numbers
+# factors could be things like levels: basic, intermediate, advanced represneted using 1 2 3
+```
+
+# Lecture 10: Reading in Data from Different Sources
+
+```{r Data Reading}
+#setwd("F:\\1_FreeMLVideo_R")
+#change to your own working directory
+
+## read in csv and tex files
+resp1=read.csv("Resp1.csv",header=T)
+head(resp1)
+str(resp1)
+
+resp2=read.table("Resp2.txt",header=T)
+head(resp2)
+
+#read in the CSV data  UCL website:
+#https://archive.ics.uci.edu/ml/datasets/Wine+Quality
+
+winer1=read.csv("winequality-red.csv",header=T)
+#header= T will read in column names as well
+head(winer1)
+summary(winer1)
+
+winer1=read.csv("winequality-red.csv",header=T,sep=",")
+#header= T will read in column names as well
+head(winer1)
+summary(winer1)
+
+#specify the correct seperator
+winer=read.table("winequality-red.csv",header=T,sep=";")
+#header= T will read in column names as well
+head(winer)
+summary(winer)
+
+##Read in excel data
+#excel
+#summary(boston1)
+library(readxl)
+dfb <- read_excel("boston1.xls")
+head(dfb)
+summary(dfb)
+
+#Using RCurl to read in csv data hosted online on github and other #sites
+library(RCurl)
+data1= read.csv(text=getURL("https://raw.githubusercontent.com/sciruela/Happiness-Salaries/master/data.csv"))
+head(data1)
+summary(data1)
+write.csv(data1)
+
+data2=read.csv(text=getURL("https://raw.githubusercontent.com/opetchey/RREEBES/master/Beninca_etal_2008_Nature/data/nutrients_original.csv"), skip=7, header=T)
+head(data2)
+summary(data2)
+
+data3=read.csv(text=getURL("https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/246663/pmgiftsreceivedaprjun13.csv"))
+head(data3)
+```
+
+## Lecture 11: Indexing and Subsetting Data
+```{r Indexing and Subsetting}
+##Lets work with in-built R datasets
+str(iris) #structure of data frame
+summary(iris)
+
+#read in first 10 rows
+head(iris,10)
+
+## subset/isolate the first 6 rows in different data frame
+df6=iris[1:6,]
+str(df6)
+
+##isloate first 2 columns
+df2=iris[,1:2]
+head(df2)
+str(df2)
+
+##isolate all rows and 2 columns
+x=iris[, c("Sepal.Length", "Sepal.Width")]
+str(x)
+
+##subset once column
+## without drop the x2 will be a vector
+x2= iris[, 'Sepal.Length', drop=FALSE]
+head(x2)
+
+## select variables Sepal.Length, Petal.Length, Species
+vars <- c("Sepal.Length", "Petal.Length", "Species")
+nd <- iris[vars]
+head(nd)
+str(nd)
+
+# exclude column Species
+vars <- names(iris) %in% c("Species") 
+nd <- iris[!vars]
+str(nd)
+head(nd)
+
+### exclude 3rd and 4th column
+nd<- iris[c(-3,-4)]
+head(nd)
+
+##select a column value
+## isolate all rows corresponding to species setosa
+
+df_setosa=subset(iris,iris$Species=="setosa")
+str(df_setosa)
+summary(df_setosa)
+```
+
+## Lecture 12:Data Cleaning - Remove NA values
+
+How to deal with missing values, 
+
+```{r Data Cleaning} 
+# MASS package - airquality dataset
+library(MASS)
+data()
+
+##Randomly distributed NAs
+data(airquality)
+??airquality ##more info about these data
+str(airquality)
+
+head(airquality)
+summary(airquality)
+
+library(Amelia)
+any(is.na(airquality))
+missmap(airquality)
+
+#remove rows containing NAs
+aq=na.omit(airquality) 
+head(aq)
+summary(aq)
+str(aq)
+missmap(aq)
+
+# alternative - only retain non-NA rows
+aq2=airquality[complete.cases(airquality), ]
+head(aq2)
+summary(aq2)
+
+## replace NAs with 0
+aqty=airquality
+
+aqty[is.na(aqty)]<-0
+head(aqty)
+summary(aqty)
+
+## replcae missing values with average values
+meanOzone=mean(airquality$Ozone,na.rm=T)
+
+# remove NAs while computing mean of Ozone with na mean value will be na
+aqty.fix=ifelse(is.na(airquality$Ozone),meanOzone,airquality$Ozone)
+summary(aqty.fix)
+
+# visualize the patterns of NAs
+# install.packages("mice")
+library(mice)
+aqty2=airquality
+md.pattern(aqty2)
+#111 observations with no values
+
+# install.packages("VIM")
+# library(VIM)
+#visualize the pattern of NAs
+# mp <- aggr(aqty2, col=c('navyblue','yellow'),
+                    # numbers=TRUE, sortVars=TRUE,
+                    # labels=names(aqty2), cex.axis=.7,
+                    # gap=3, ylab=c("Missing data","Pattern"))
+
+#72.5% observations in the entire data have no missing values
+#22.9% missing values in Ozone
+
+#impute
+#500 iterataions of predictive mean mapping for imputing
+#5 datasets
+im_aqty<- mice(aqty2, m=5, maxit = 50, method = 'pmm', seed = 500)
+
+#50 iterataions of predictive mean mapping for imputing
+summary(im_aqty)
+im_aqty$imp$Ozone #values imputed in ozone
+
+#get back the completed dataset u
+completedData <- complete(im_aqty,1)
+head(completedData)
+```
+
+## Lecture 13: Exploratory Data Analysis in R
+
+```{r Exploratory Data Analysis}
+##### (1)Can explore the distribution of 1 variable 
+#### (2) Can explore the relationship between 2 variables 
+
+data(iris)
+names(iris)
+summary(iris)
+
+##examine data distribution of a quantitative variable
+hist(iris$Sepal.Length) # distribution of a varaibles
+boxplot(iris$Sepal.Length,main="Summary of iris",xlab="Sepal Length")
+#viz of descreptive statstics 
+
+#relation bw 2 quantitative variables
+plot(iris$Sepal.Length,iris$Sepal.Width)
+
+#PLOTTING CATEGORICAL or COUNT VARIABLES
+data(mtcars)
+names(mtcars)
+str(mtcars)
+counts <- table(mtcars$gear)
+counts
+
+barplot(counts, main="Cars", xlab="Number of Gears")
+barplot(counts, main="Cars", xlab="Number of Gears",horiz=TRUE)
+barplot(counts, main="Cars", xlab="Number of Gears",horiz=TRUE,col="red")
+
+
+## Improved data vizualization
+library(ggplot2)
+
+# relation bw Sepal length and width of 3 different species
+qplot(Sepal.Length, Petal.Length, data = iris,color = Species)
+
+# We see that Iris setosa flowers have the narrowest petals.
+qplot(Sepal.Length, Petal.Length, data = iris, color = Species, size = Petal.Width)
+
+##Add labels to the plot
+qplot(Sepal.Length, Petal.Length, data = iris, color = Species,
+      xlab = "Sepal Length", ylab = "Petal Length",
+      main = "Sepal vs. Petal Length in Iris data")
+
+qplot(Sepal.Length, Petal.Length, data = iris, geom = "line", color = Species) #line plot
+
+########################GGPLOT#####################
+
+##use ggplot for viz
+#Format: ggplot(data = , aes(x =, y =, ...)) + geom_xxx()
+#aes-> we specify x,y 
+#geom-> Plot type: wether its a histogram, boxplot
+ggplot(data = iris, aes(Sepal.Length, Sepal.Width)) + geom_point()
+
+#distinguish between species using colour scheme
+ggplot(data = iris, aes(Sepal.Length, Sepal.Width)) + geom_point(aes(colour = Species))
+#or
+ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, shape = Species)) + geom_point()
+
+## (1) we can only specify colour and shapes on factor variables
+##(2)  Factors:numbers representing categorical values
+##(3)function "factor" turns any number into a qualitative representation
+
+str(mtcars)
+
+#use mtcars as a factor in visualization
+ggplot(mtcars, aes(x = mpg, y = wt, colour = factor(gear))) + geom_point()
+
+#histogram
+ggplot(iris, aes(x = Sepal.Length)) + geom_histogram()
+
+ggplot(iris, aes(x = Sepal.Length, fill = Species)) + geom_histogram()
+
+#boxplot
+ggplot(iris, aes(x = Species, y = Sepal.Length)) +geom_boxplot()
+
+#visualize relationship bw the different variables for the 3 species
+ggplot(data = iris, aes(Sepal.Length, Sepal.Width)) + geom_point() + facet_grid(. ~ Species) + geom_smooth(method = "lm")
+
+
+
+```
+
+# Section 3:
+## Lecture 16: Measure of Center
+
+```{r Measure of Center}
+x <- rnorm(20000,3,.25)
+hist(x)
+mean(x)
+
+x=c(2,3,4,5,6,8,80,9,10,6,7)
+
+median(x)
+
+#compare the means and medians
+#histograms: distribution of values of continuous variables
+#frequency of values represented using bars
+
+time <- c(19.09, 19.55, 17.89, 17.73, 25.15, 27.27, 25.24, 21.05, 21.65, 20.92, 22.61, 15.71, 22.04, 22.60, 24.25)
+hist(time)
+
+#left skew: Mean <median
+# few smaller values reduce the mean
+
+install.packages("moments")
+library(moments)
+
+skewness(time) #skewness is a measure of the asymmetry o
+
+N <- 10000
+x <- rnbinom(N, 10, .5)
+hist(x)
+ #right skew: mean>median
+#few larger values increase the mean
+skewness(x) #positive skew
+
+skewness(iris$Petal.Length)
+
+mean(iris$Petal.Length)
+median(iris$Petal.Length)
+
+range(iris$Petal.Length) #minimum to maximum 
+```
+
+## Lecture 17: Measure of Variations
+
+Standard deviation: a measure of dispersion of the data from the mean, degree to which individuals within the sample differ from the sample mean
+
+Standard error: estimates how precise is our estimate of the mean i.e., how far the sample mean is likely to be from the population mean
+
+```{r Measure of Variations}
+################### Variation 
+
+head(iris)
+
+summary(iris$Petal.Length)
+
+std=sd(iris$Petal.Length) #standard deviation of petal length mean
+std
+
+# install.packages("sciplot")
+library(sciplot)
+se(iris$Petal.Length)
+
+#display 5 point summary graphically- boxplot
+boxplot(iris$Petal.Length, main="Sepal Length",ylab="length")
+```
+
+## Lecture18: Charting and Graphing Continuous Data
+```{r Charting and Graphing - Continuous variables}
+#########################
+#################Boxplot- visualize the 5 point data summary
+#for continuous data
+
+data("ToothGrowth")
+head(ToothGrowth)
+
+boxplot(len ~ supp, data = ToothGrowth) #compare tooth length
+#for two different supp
+
+library(ggplot2)
+qplot(ToothGrowth$supp, ToothGrowth$len, geom="boxplot")
+#or 
+ggplot(ToothGrowth, aes(x=supp, y=len)) + geom_boxplot()
+
+library(MASS)
+head(birthwt)
+
+ggplot(birthwt, aes(x=factor(race), y=bwt)) + geom_boxplot()
+#compare numerical variables across categories
+
+ggplot(birthwt, aes(x=factor(race), y=bwt)) + geom_boxplot()+ggtitle("Birth wt")
+#compare numerical variables across categories
+
+ggplot(birthwt, aes(x=factor(race), y=bwt)) + geom_boxplot()+coord_flip()
+
+#horizontal boxplots
+
+head(ChickWeight)
+summary(ChickWeight)
+
+ggplot(ChickWeight, aes(x=Time, y=weight))+ 
+  geom_boxplot(aes(group=Time))
+#group the response and weight according to time
+
+ggplot(ChickWeight, aes(x=Time, y=weight))+ 
+  geom_boxplot(aes(group=Time))+facet_grid(. ~ Diet)
+#group response variable
+#panels according to diet
+
+data("diamonds")
+head(diamonds)
+
+ggplot(diamonds, aes(factor(cut), price, fill=cut)) + geom_boxplot() + ggtitle("Diamond Price according Cut") + xlab("Type of Cut") + ylab("Diamond Price U$")
+#fill-specify colour according to cut
+```
+
+## Lecture 19: Charting and Graphing Discrete Data
+```{r}
+#################################################################
+############# BAR GRAPH: Represent discrete categories of data
+# length- represents the magnitude or frequencies of data
+
+head(mtcars)
+c <- table(mtcars$gear)
+barplot(c, main="Car Distribution", 
+        xlab="Number of Gears")
+
+t=tapply(iris$Sepal.Length, iris$Species, mean)
+t
+
+barplot(t, main="Average Sepal Length", 
+        xlab="Species",ylab="Mean")
+
+library(ggplot2)
+data(diamonds)
+head(diamonds)
+
+table(diamonds$color, diamonds$clarity)
+
+barplot(table(diamonds$color, diamonds$clarity),
+         legend = levels(diamonds$color),           
+         beside = TRUE)    
+
+
+barplot( table(diamonds$color, diamonds$clarity),
+         legend = levels(diamonds$color),           
+         beside = TRUE,
+         xlab = "Diamond Clarity",                      # Add a label to the X-axis
+         ylab = "Diamond Count",                        # Add a label to the Y-axis
+         main = "Diamond Clarity, Grouped by Color",    # Add a plot title
+         col = c("#FFFFFF","#F5FCC2","#E0ED87","#CCDE57",     # Add color*
+                 "#B3C732","#94A813","#718200") )
+
+d=table(diamonds$color, diamonds$clarity)
+######## USe GGPLOT for better graphs
+
+# Very basic bar graph
+qplot(factor(cyl), data=mtcars) #plot factor variables
+#or
+ggplot(mtcars, aes(x=factor(cyl))) + geom_bar()
+
+qplot(color, data=diamonds, geom="bar") #specify bar
+
+#stacked bars
+head(diamonds)
+ggplot(diamonds, aes(clarity, fill=cut)) + geom_bar(position="dodge")
+
+ggplot(diamonds, aes(cut, fill=cut)) + geom_bar() + 
+  facet_grid(. ~ clarity) #seperate panels on the basis of clarity
+
+ship=as.data.frame(Titanic)
+head(ship)
+ggplot(aes(x=Age, weight=Freq), data=ship) +
+  geom_bar()
+
+ggplot(aes(x=Age, weight=Freq), data=ship) +
+  geom_bar()+
+  facet_grid(Sex~Class)
+
+
+## error bar: error or uncertainty in a reported measurement (mean)
+##one standard deviation of uncertainty, one standard error
+
+library(dplyr)
+
+isum= iris %>% # the names of the new data frame and the data frame to be summarised
+  group_by(Species) %>%   # the grouping variable
+  summarise(avg = mean(Petal.Length),  # calculates the mean of each group
+            sdpl = sd(Petal.Length))
+
+ggplot(isum, aes(Species, avg)) + geom_bar(stat="identity") +  geom_errorbar(aes(ymin=avg-sdpl, ymax=avg+sdpl),width=0.2)
+
+```
+
+## Lecture 20: Deriving insights from qualitative / nominal data
+```{r}
+################### Chi-aquare test
+############ H0: Two nominal variables (row and columns)
+#have no association between them
+
+#whether or not there is an association 
+#between gender and food
+
+# Entering the data into vectors
+men = c(150, 120, 45)
+women = c(320, 270, 100)
+
+# combining the row vectors in matrices, then converting the matrix into a data frame
+food.survey = as.data.frame(rbind(men, women))
+
+# assigning column names to this data frame
+names(food.survey) = c('Chicken', 'Salad', 'Cake')
+
+food.survey
+chisq.test(food.survey)
+
+#frequencies
+library(MASS)   
+levels(survey$Smoke) 
+sfreq = table(survey$Smoke) 
+sfreq
+
+
+library(gmodels)
+#2 way cross-tabulation- multivariate frequency table
+#
+#frequencies and relative frequencies
+head(mtcars)
+table(mtcars$carb, mtcars$cyl) 
+CrossTable(mtcars$carb, mtcars$cyl, prop.t=TRUE, prop.r=TRUE, prop.c=TRUE)
+
+#marginal totals: total of individual rows and columns
+#grandtotal: 32 (total no of individuals in table)
+#proportion of carb==1 (0.219) and cyl==4 (0.34)
+
+#see which group is different. Needs an n*n matrix
+library(fifer) 
+# Makes a table of observations -- similar to first example in chisq.test
+M <- as.table(rbind(c(76, 32, 46), c(48,23,47), c(45,34,78)))
+dimnames(M) <- list(sex=c("Male","Female","Juv"),loc=c("Lower","Middle","Upper"))
+M
+chisq.test(M)
+
+# Shows post-hoc pairwise comparisons using fdr method
+chisq.post.hoc(M)
+```
+
+
+# Section 4: Probability Distributions
+## Lecture 22: Background 
+Random variables are categorized into discrete and continuous. Random varibles: a numerical characteristic that take on different value due to chance.
+- Discrete: Discrete outcomes such as flips of coins, bet amount won, present/abset
+- Continuous: Continous measurements such as value-height of tree, weight CO2
+
+Discrete variables: its probability distribution is any table, graph or formula that give each possible value and the probability of that value.
+
+On the other hand, a continuous random variables take on infinite number of possible values. In this case, it is determined P(X=x), and this is the probability mass function. 
+
+### Probability distribution for discrete variables
+
+Binomial probability distribution:
+Observation consists of binary outcomes such as male/female, present/absent.
+
+Poission:
+Suitable for count data such as number of butterflies in a forest transect.
+
+Negative binomial:
+More robust than Possion and good for modeling natural situations. 
+
+### Probability distribution for continuous variables
+
+Normal distribution:
+a bell shaped curved - related to t-distributions.
+
+## Lecture 23: Normal Distribution
+Normal distribution is a one of the most common probability distributionin statistics. 
+
+- The data follow a smoooth bell-shaped curve
+- The mean=median=mode are eqaul
+- standard devisions (SD) depict how far the data are dispersed from the mean 
+  (a) 68% of data lie within 1 standard devision
+  (b) 95% of data lie within 2 standard deviation
+  (c) 99.7% of data lie within 3 standard deviation
+
+## Lecture 24: Checking for Normal Distribtuion
+
+Whether the data is normally distributed can ve checked 
+
+1. histogram 
+2. qqline
+3. Shapiro test
+
+```{r Checking for normal distribution}
+############## t-tests: examine if the difference in means is significant or not
+
+normdis<-rnorm(n=20000, m=30, sd=3)
+hist(normdis)
+df <- data.frame(normdis)
+head(df)
+
+library(ggplot2)
+ggplot(df,aes(normdis))+geom_histogram(bins=500)
+ggplot(df,aes(normdis))+geom_freqpoly()
+```
+
+Other methods to check normal distribution are qqline and shapiro test. 
+
+In qqline, data should lie on the line if it is normally distributed.
+
+The presense of pigtails and outliers at the extream make it uncliear its normally distributed.
+
+Shapiro test assumes data is normall distributed on the null hypothesis.
+
+ToothGrowth dataset shows the effect of Vitamin C on Tooth Growing in Guinea Pigs. 
+the variable named "len" is numeric tooth length.
+
+```{r normal distribution check - qqline and shapiro test}
+?ToothGrowth
+data("ToothGrowth")
+head(ToothGrowth)
+str(ToothGrowth)
+
+hist(ToothGrowth$len)
+
+#qqplot
+qqnorm(ToothGrowth$len)
+qqline(ToothGrowth$len)
+
+# Shapiro-Wilk normality test 
+#H0: data are normally distributed
+shapiro.test(ToothGrowth$len) 
+#data are normally distributed
+```
+
+## Lecture 25: Standard normal distribution
+
+Normal distribution is known as the standard normal distribution, which is a special case when mean=0, standard deviation=1.
+
+### Standard score (z-values)
+
+Standard normal distribution is also known as z-distribution. Z-distribution is used to standardize x-values. 
+
+In a z-distribution, z=1 means value that is 1 standard deviation above the mean. Using the stanradization formula to standardize values from any distribution. 
+
+We can compara numbers from different distributions, e.g., compare the performance of student a who scored 70/100 with student b who scored 45/50.
+
+## Lecture 26: Confidence Interval Theory
+
+CI indicates how much undertainty there is in a sample statistic (such as mean) of a population parameter.
+
+These are computed to quantify how confident we can be results from our surveys/sample observations/sample experiments that these reflect up to what extent these reflect the entire population.
+
+95% CI has been used very widely across different fields to assess how much variability will apprear in repeated measures.
+
+### T-Distribution
+
+T-distribution is used in case of small samples:
+(1) Similar to normal distribution
+(2) Typically used to study population mean as opposed to individual points
+(3) Use t-distribution for analysing the mean of a population (normally distributed)
+(4) Degree of freedom (n-1) is the population size is n
+(5) Large DF means t-distribution look more 
+
+## Lecture 27: Confidence interval computation in R
+```{r confidence interval computation}
+# dataset overview 
+head(ToothGrowth)
+
+## Confidence interval of mean
+s = sd(ToothGrowth$len)  
+SE = s/sqrt(n) #s error 
+
+zval=qnorm(0.975) #z value
+zval
+
+#margin of error
+moe=zval*SE 
+
+xbar = mean(ToothGrowth$len)   # sample mean 
+xbar + c(-moe, moe) 
+
+
+## t-based Confidence Interval for Mean
+## use in cases n<30
+
+n = length(ToothGrowth$len) 
+
+tval=qt(0.975,df=n-1) #critical t value 
+#specify degrees of freedom
+tval   #very close to z value
+
+moe=tval*SE #margin of error
+
+xbar = mean(ToothGrowth$len)   # sample mean 
+xbar + c(-moe, moe) 
+
+t.test(ToothGrowth$len) #95% CI for mean
+t.test(ToothGrowth$len,conf.level = 0.9)
+```
+
+# Section 5: Statistical Inference
+## Lecture 29: Hypothesis Test
+Hypothesis testing: (a) we collect data from a sample of a population, (b) derive a test statistic (c) measure a claim about a population parameter. 
+- Null hypothesis (H0): (a) baseline claim, (b) no significant different between specified population. 
+
+Type 1 error: reject the H0 when we should not (this is a false alrm)
+Type 2 error: case of missing detection, by not rejecting the H0 when we should. Large enought sample can avoide this. 
+
+Ability to detect the H0 is the power of the test.
+
+## Lecture 30: T-test: application in R
+```{r T-test application}
+# t-tests: examine if the difference in means is significant or not
+
+data("ToothGrowth")
+head(ToothGrowth)
+str(ToothGrowth)
+
+hist(ToothGrowth$len)
+
+# Shapiro-Wilk normality test 
+#H0: data are normally distributed
+shapiro.test(ToothGrowth$len) 
+# data are normally distributed, because we cannot reject null hypothesis
+
+library(ggplot2)
+qplot(supp,len,data=ToothGrowth, 
+      main="Tooth growth of guinea pigs",xlab="Supplement type", ylab="Tooth length") + geom_boxplot(aes(fill = supp))
+
+mean(ToothGrowth$len)
+
+### one sided t-test
+### test if the mean value is equal to a certian number
+### H0: true value of mean=18
+t.test(ToothGrowth$len,mu=18)
+ #or greater than or less than a given value
+
+#H0: true value of mean is 3
+t.test(ToothGrowth$len, alternative = "greater", mu = 3)
+
+# independent 2-group t-test
+# test the difference in mean
+# H0: These is no difference in the population means of the 2 groups
+# split data set
+OJ = ToothGrowth$len[ToothGrowth$supp == 'OJ']
+VC = ToothGrowth$len[ToothGrowth$supp == 'VC']
+
+t.test(OJ, VC,
+       paired = FALSE, var.equal = FALSE, conf.level = 0.95) 
+# Variances of tooth growth are different when using different supplement and dosage.
+# test for mean being significantly different
+t.test(OJ, VC,alternative = "greater",paired = FALSE) 
+
+# test for mean being significantly greater
+# paired=FALSE : measurements collected seperately
+# If you randomly sample each set of items separately, under different conditions, the samples are independent
+
+## paired observations: If you collect two measurements on each item
+t.test(OJ, VC,
+       paired = TRUE, var.equal = FALSE, conf.level = 0.95) 
+
+# e.g before or after treatments
+# OJ and VC were applied on test subjects in 2 treatment groups
+```
+
+## Lecture 31: Non-Paramatetric Alternative to T-Test
+```{r}
+# Non parametric version of t-tests: -----
+# Examine the difference in median values bw  distributions
+
+data("CO2")
+head(CO2)
+str(CO2)
+hist(CO2$uptake)
+
+# Shapiro-Wilk normality test 
+#H0: data are normally distributed
+shapiro.test(CO2$uptake) 
+#data are not normally distributed distributed
+
+# Mann-whitney U test: unpaired data
+## compare uptake for chilled and non-chilled
+## independent samples
+chill = CO2$uptake[CO2$Treatment == 'chilled']
+nonchill = CO2$uptake[CO2$Treatment == 'nonchilled']
+
+wilcox.test(chill, nonchill) 
+wilcox.test(CO2$uptake~CO2$Treatment) #treatment is factor
+
+# Wilcoxon Signed-Rank Test: paired data
+library(MASS) 
+
+head(immer)#wheat yield in 1931 and 32
+
+#H0: yields of the two sample years are identical populations
+wilcox.test(immer$Y1, immer$Y2, paired=TRUE) 
+```
+
+## Lecture 32: One-way ANOVA
+```{r}
+# One way ANOVA ------
+##an extension of independent two-samples t-test 
+##for comparing means ehen we have 2+ groups
+##data is organized into 2+ groups based on one single grouping 
+#variable (also called factor variable)
+
+
+data("PlantGrowth")
+head(PlantGrowth)
+str(PlantGrowth)
+summary(PlantGrowth)
+
+levels(PlantGrowth$group)
+
+install.packages("ggpubr")
+library(ggpubr)
+
+ggboxplot(PlantGrowth, x = "group", y = "weight", 
+          color = "group", palette = c("blue", "red", "green"),
+          order = c("ctrl", "trt1", "trt2"),
+          ylab = "Weight", xlab = "Treatment")
+
+
+md = aov(weight ~ group, data = PlantGrowth)
+summary(md)
+
+#there are significant differences between the groups highlighted 
+
+#which of the groups are significantly different?
+# pst hoc test
+t=TukeyHSD(md)
+t
+
+plot(t)
+#difference between trt2 and trt1 is significant 
+
+#Pairwise t-test
+pairwise.t.test(PlantGrowth$weight, PlantGrowth$group,
+                p.adjust.method = "BH")
+
+## Conditions of one way ANOVA
+
+## 1) Check the homogeneity of variance assumption
+plot(md, 1)
+
+##2) Normality of residuals.
+plot(md, 2)
+
+# Extract the residuals
+aov_residuals <- residuals(object = md )
+# Run Shapiro-Wilk test
+shapiro.test(x = aov_residuals ) 
+# Errors are normally distributed
+```
+
+## Lecture 33: Non-paramaetric version of ANOVA
+```{r}
+##################################################################
+#### Non-parametric One way ANOVA
+
+# 1) If the condition of normality of residuals is not met, 
+# we implement the kruskal wallis test
+kruskal.test(weight ~ group, data = PlantGrowth)
+pairwise.wilcox.test(PlantGrowth$weight, PlantGrowth$group,
+                     p.adjust.method = "BH")
+
+# 2) where the homogeneity of variance assumption is violated
+oneway.test(weight ~ group, data = PlantGrowth)
+```
+
+## Lecture 34: Two-way ANOVA
+```{r}
+# Two way ANOVA -----
+## evaluate simultaneously the effect of two grouping variables
+##2 Fctor variables on a response variable
+
+## H0: response mean for all factor levels are equal.
+
+data("ToothGrowth")
+head(ToothGrowth)
+str(ToothGrowth)
+
+df=ToothGrowth
+
+head(df)
+summary(df)
+str(df)
+
+df$dose <- factor(df$dose, 
+                       levels = c(0.5, 1, 2),
+                       labels = c("D0.5", "D1", "D2"))
+
+
+boxplot(len ~ supp * dose, data=df, frame = FALSE, 
+        col = c("red", "blue"), ylab="Tooth Length")
+
+## see if tooth length depends on supp and dose.
+#two factor variables are independent
+md1 <- aov(len ~ supp + dose, data = df)
+summary(md1)
+
+#both supp and dose are statistically significant
+#Mean tooth length  for both supp and dose are NOT equal
+
+# test two variables might interact to create an synergistic effect
+
+md2 <- aov(len ~ supp * dose, data = df)
+summary(md2)
+
+#two main effects (supp and dose) are statistically significant, #as well as their interaction
+#relationships between dose and tooth length depends on the supp method
+# influence the difference between mean tooth length
+
+## Post Hoc test to identify which dosage group is different
+TukeyHSD(md2, which = "dose")
+
+#pairwise t-tests
+pairwise.t.test(df$len, df$dose,
+                p.adjust.method = "BH")
+
+## Testing when we have unequal sample numbers
+library(car)
+mya = aov(len ~ supp * dose, data = df)
+Anova(mya, type = "III") #Type-III sums of squares used when we have 
+#unequal numbers per group
+
+######### CONDITIONS FOR " WAY ANOVA
+
+##1) Test homogeneity of variance assumption
+plot(md2, 1)
+
+##2) test for normality of residuals
+plot(md2, 2)
+
+# Extract the residuals
+aov_residuals <- residuals(object = md2 )
+# Run Shapiro-Wilk test
+shapiro.test(x = aov_residuals ) #errors are normally distributed
+```
+
+## Lecture 35: Power Test for Detecting Effects
+
+```{r}
+##### stat test will not be able to detect the true diff if the sample size
+
+# install.packages("pwr")
+library(pwr)
+
+# pwr.t.test(n=,d=,sig.level=,power=,type=c("two.sample","one.sample"))
+# n=number of observations, d=effect size
+# cohen suggest that d values of 0.2, 0.5, and 0.8 represent small, medium
+# power-probability of rejecting a false hypothesis
+
+# power that a t-test has for detecting a difference as large as 1 unit
+# from zero if the standard deviation is 3 units, 
+# we have a sample of n=50, and we are testing with alpha=.05
+power.t.test(50,1,3,.05,.8,NULL, type="one.sample")
+
+# one sample t-test determines whether the sample mean is statistically 
+# from a known or hypothesized population mean
+
+# collect 73 samples
+# for two sample problems
+power.t.test(NULL,1,3,.05,.8)
+
+# how large must a difference for us to detect it with 80% power 
+# if we can only afford 50 subjects per group?
+power.t.test(50,NULL,3,.05,.8)
+
+# ANOVA
+# one-way ANOVA comparing 4 groups, calculate the 
+# sample size needed in each group to obtain a power of 
+# 0.80, when the effect size is moderate (0.25)
+pwr.anova.test(NULL,k=4,f=.25,sig.level=.05,power=.8)
+```
+
+# Section 6: Relationship Between Two Different Quantitative Variables
+
+## Lecture 38: Correlation
+
+correlation - dimension free measure to determine the presence and strength of association between random variables (x,y).
+- Parametric form: Pearson's correlation
+- Non-parameteric: Spearman's Rank and Kendall Tau
+
+```{r}
+# Corrlation dataset-----
+data(mtcars)
+str(mtcars)
+head(mtcars)
+
+library(ggplot2)
+p1=qplot(mpg, wt, data = mtcars,
+      xlab = "Miles/gallon", ylab = "Weight",
+      main = "Miles per gallon vs. Weight")
+
+p2=qplot(Petal.Length,Petal.Width,data=iris,xlab="Petal Length",ylab="Petal Width",main="Sepal Length vs Width")
+
+qplot(Petal.Length,Petal.Width,data=iris,xlab="Petal Length",ylab="Petal Width",col=Species)
+
+library(gridExtra)
+grid.arrange(p1, p2, ncol=2)
+```
+
+```{r}
+# corrleation ggplot -----
+hist(mtcars$mpg)
+hist(mtcars$wt)
+
+# Shapiro-Wilk normality test for mpg
+#H0: data are normally distributed
+shapiro.test(mtcars$mpg) 
+# Shapiro-Wilk normality test for wt
+shapiro.test(mtcars$wt) # => p = 0.09
+
+
+#Pearson's correlation
+cor(mtcars$mpg,mtcars$wt) #default Perason's
+cor(mtcars$mpg,mtcars$wt, method="pearson") #specify the method
+
+cor(mtcars$mpg,mtcars$wt, method="pearson",use = "complete.obs")
+#in case of NAs being present, specify complete.obs
+
+#is my correlation statistically significant?
+#Ho=there is no association between the two variables
+cor.test(mtcars$mpg,mtcars$wt)
+```
+
+```{r}
+# correlation plot
+mydata <- mtcars[, c(1,3,4,5,6,7)]
+head(mydata)
+
+library(corrplot)
+corr1<-cor(mtcars) #compute multiple correlations
+corr1
+corrplot(corr1)
+corrplot(corr1, method="color")
+
+## ANOTHER CORRELATION
+
+cor(iris$Petal.Length,iris$Petal.Width)
+
+#should I even use Pearson's correlation for iris?
+shapiro.test(iris$Petal.Length)
+
+cor(iris$Petal.Length,iris$Petal.Width, method="spearman") 
+#spearman's rank method
+cor(iris$Petal.Length,iris$Petal.Width, method="kendall") 
+```
+
+## Lecture 39: Linear Regression - Theory
+linear regression is used for modelling quantitative dependency. 
+
+## Lecture 40: Linear Regression-Implementation in R
+fit = lm(y~x, data=data frame)
+
+```{r}
+###################### REGRESSION -----
+
+#Y can only be numerical continuous and x can be numerical or categorical
+names(iris)
+
+#Linear regression- with single X variable
+fit1=lm(Petal.Length~Sepal.Length, data=iris)
+
+#look at the model results
+summary(fit1)
+
+       
+#Multiple regression    
+fit2=lm(Petal.Length~., data=iris)#all remaining variables are now X
+fit2=lm(Petal.Length~.-Species, data=iris)#remove species from analysis
+summary(fit2)
+
+## if we don't want all variables 
+names(iris)
+#fit2=lm(Petal.Length~Sepal.Width+Petal.Width, data=iris)
+ 
+ 
+ # amount of variance explained by each predictor
+# install.packages("hier.part")
+library(hier.part)
+x <- iris[,2:4] #response var
+HP=hier.part(iris$Sepal.Length, x)
+```
+
+## Lecture 41: The conditions of Linear Regression
+
+1. X an Y variables have a linear relation (linear scatter pattern)
+2. Errors/residuals are normally distributed
+3. Errors are independent/no autocorrelation between errors
+4. Constant error variance: Homogeneity of residuals or equal variance (variance around the regession line) is the same for all values of the predictor variable
+5. Avoid multi-collenearity
+
+- Residual vs Fitterd
+- Normal Q-Q
+checking the distribution of residuals, which mostly fall within the line 
+- Scale-Location
+- Residual vs Leverage
+
+```{r}
+# Conditions of linear regression Part 1----- 
+
+############################################################
+#########################################################
+####### Check the conditions of regression
+
+# testing model assumptions some simulated data
+x <- runif(100, 0, 10)
+y <- 1 + 2 * x + rnorm(100, 0, 1)
+m <- lm(y ~ x)
+par(mfrow = c(2, 2))
+plot(m)
+```
+
+- Residual vs Fitterd
+used for constant error variance checking
+Heteroskedascity exist possibility
+
+- Normal Q-Q
+residuals are normally distrivuted
+
+- Scale-Location
+used for constant error variance checking
+plot shows residuals are spread equally along fittervalues
+
+- Residual vs Leverage
+
+```{r}
+# Conditions of linear regression Part 2----- 
+
+fit=lm(Sepal.Length~Petal.Length+Petal.Width,data=iris)
+summary(fit)
+par(mfrow = c(2, 2))
+plot(fit)
+
+library(lmtest)
+# Test for Autocorrelated/non-independence of Errors
+# Ho: There is no auto-correlation bw errors (errors r independent)
+# Durbin-Watson test
+dwtest(fit)
+
+#H0: hypothesis of constant error variance, i.e.  NO heteroscedasticity
+#variance around the regression line is the same for all values of the predictor variable (X)
+library(car)
+ncvTest(fit)
+
+#identify outliers that have too much influence on model
+#influential data points
+cutoff <- 4/((nrow(iris)-length(fit$coefficients)-2)) 
+par(mfrow=c(1,1))
+plot(fit, which=4, cook.levels=cutoff) #influential data points/outliers
+```
+
+## Lecture 42: Dealing with Multi-Collinearity
+Phenomenon in which two or more predictor variables in multiple regression model are highly correlated
+
+This means that one can be linearly predicted from the others with a substantial degree of accracy
+
+Inclusin of collinear variables can inflate the regression coefficients.
+
+Two approaches 
+(1) Tackle multi-collinearity
+Use caret and corrplot packages to tackle multi-collenarity between variables
+
+(2) VIF (variance inflation factor)
+
+Calculate the variance inflation factor (VIF) for each predictor is another way of identifying collinear predictors. The variance inflation factor represents the proportion of variance in one predictor explained by all the other predictors in the model. 
+
+A VIF=1 indicates no collinearity, whereas increasingly higher values suggest increasing multi-collinearity.
+
+```{r}
+# multi-collinearity -----
+
+# install.packages("mlbench")
+library(mlbench)
+library(help = "mlbench")
+
+data(BostonHousing)
+str(BostonHousing)
+
+summary(BostonHousing)
+head(BostonHousing)
+
+##Predict the variation in medv house price- median house price
+## medv, our target variable (Y) is a continuous numerical entity
+##Regression problem
+
+library(ggplot2)
+library(car)
+install.packages("caret")
+library(caret)
+library(corrplot)
+
+#(1) Tackle multi-collineraity, i.e. presence of highly correlated
+#predictors (X)
+#we remove numerical Xs with correlation>0.7
+
+#Dropping response variable (Y) for calculating Multicollinearity
+mat_a = subset(BostonHousing, select = -c(medv))
+head(mat_a)
+
+# we only want numerical variables for computing correlation
+numeric <- mat_a[sapply(mat_a, is.numeric)]
+head(numeric)
+
+#Calculating Correlation- strength of association between two variables
+descrCor <- cor(numeric)
+print(descrCor)
+
+# correlation visualization
+corrplot(descrCor)
+
+#remove highly correlated variables
+# if x1 and x2 are highly correlated,which one to remove depends on 
+#your own understanding of the data
+# install.packages('caret')
+library(caret)
+require(caret)
+# Checking Variables that are highly correlated
+highlyCorrelated = findCorrelation(descrCor, cutoff=0.7)
+??findCorrelation
+
+#Identifying Variable Names of Highly Correlated Variables
+highlyCorCol = colnames(numeric)[highlyCorrelated]
+highlyCorCol
+
+
+#Remove highly correlated variables from the original dataset and create a new dataset
+data3 = BostonHousing[, -which(colnames(BostonHousing) %in% highlyCorCol)]
+dim(data3)
+
+names(data3)
+
+
+##########vif
+# Choose a VIF cutoff under which a variable is retained (Zuur et al. 2010 
+# vif>10  multi-collinearity
+#can also reject predictors with vf 5-10
+#car package
+
+fit=lm(medv~.,data=BostonHousing)
+summary(fit)
+# variance inflation factor
+# 
+vif(fit) 
+
+##check
+df=cbind(BostonHousing$medv,data3)
+df=as.data.frame(df)
+fit2=lm(medv~.,data=df)
+vif(fit2)
+```
+
+## Lecture 43: What more does the regression model tell us?
+
+(1) 95% Confidence Interval(CI): 
+The range in which the true population parameter lies at a 95% level of confidence. All samples are different and produce different results. With a large number of repeated samples, 95% of the interval would contain the true parameter. Covers the expected value of y or slope (% uncertainty in estimating the value)
+
+(2) Prediction interval:
+This is the estimate of an interval in which future observations will fall, with a certain probability. Bigger than CI Tries to account for the future value of y ~ moving target (& account fo fluctuations).
+
+```{r}
+# More than regression
+# install.packages('ISwR')
+library(ISwR)
+data(rmr)
+head(rmr)
+
+x=rmr$body.weight
+y=rmr$metabolic.rate
+plot(x,y,xlab="Body wt",ylab="Metabolic")
+
+fit <- lm(y ~ x)
+summary(fit)
+abline(fit) #fit regression line via pts
+
+library(ggplot2)
+#plot 95% CI for predictions from the linear model lm
+ggplot(data = rmr, aes(body.weight, metabolic.rate)) + geom_point() + geom_smooth(method = "lm")
+
+#99% CI
+ggplot(data = rmr, aes(body.weight, metabolic.rate)) + geom_point() + geom_smooth(method = "lm",level=0.99)
+
+library(stats)
+confint(fit, 'x', level=0.95) #95% CI for slope y=mx+b
+
+# install.packages("HH")
+library(HH)
+#plot more intervals
+##on our fitted model
+ci.plot(fit)
+ci.plot(fit,xlab="Body wt",ylab="Metabolic")
+
+################ With unseen data
+#predict CI for a new pt x
+newconf <- predict(fit, newdata=data.frame(x=103), interval="confidence",
+                   level = 0.95)
+newconf
+
+##CI for regression line
+## with new data
+newx <- seq(120, 200, by=20)
+fit <- lm(y ~ x)
+summary(fit)
+plot(x,y,xlab="Body wt",ylab="Metabolic")
+abline(fit) #fit regression line via pts
+conf_interval = predict(fit, newdata=data.frame(x=newx), interval="confidence",
+                        level = 0.95)
+lines(newx, conf_interval[,2], col="blue", lty=2)
+lines(newx, conf_interval[,3], col="blue", lty=2)
+
+#prediction interval
+pred_interval <- predict(fit, newdata=data.frame(x=newx), interval="prediction",
+                         level = 0.95)
+plot(x,y,xlab="Body wt",ylab="Metabolic")
+lines(newx, pred_interval[,2], col="red", lty=2)
+lines(newx, pred_interval[,3], col="red", lty=2)
+```
+
+## Lecture 44: Linear Regression and ANOVA
+F-Test/ANOVa in Regression
+
+H0: Fit of the intercept-only model (mean of response variable) is as good as the regression model
+H1: The regression model is better than the fit of the intercept-only model
+
+F-value, p <0.05 -> The model predicts response better than mean Y
+Emphasizes the overall significance of the regression model.
+
+```{r}
+# Linear Regression and ANOVA
+fit1=lm(Sepal.Length~Petal.Length,data=iris)
+ggplot(aes(x=Petal.Length,y=Sepal.Length),data=iris)+geom_point()+geom_smooth()
+summary(fit1)
+anova(fit1)
+```
+
+## Lecture 45: Linear Regression with Categorical Variables and Interaction Terms
+```{r}
+# Linear regression with categorical variables
+
+#Interaction bw X terms
+data(iris)
+library(ggplot2)
+
+# relation bw Sepal length and width of 3 different species
+qplot(Sepal.Length, Petal.Length, data = iris)
+
+fitlm=lm(Petal.Length~Sepal.Length,data=iris)
+summary(fitlm)
+
+qplot(Sepal.Length, Petal.Length, data = iris,color = Species)
+
+#is species a significant factor
+x=lm(Petal.Length~Sepal.Length+Species,data=iris)
+summary(x)
+
+#Is there any significant variation in Petal length across species
+#we can ask whether some species tend to have flowers 
+#that have long-skinny petals vs. short-wide petals.
+
+fit1=lm(Petal.Length~Sepal.Length*Species,data=iris) #interaction bw
+#sepal length & species--> Sepal.Length*Species
+summary(fit1)
+#lets examine the statistical significance
+anova(fit1)
+
+# in case of Sepal.Length:Species, p<0.05
+# Our numerical predictor variable Sepal Length is influenced by Species
+
+#So we can conclude that the regression slopes do vary across the three species.
+# quantitative relation bw petal length & sepal length influenced by species
+
+# Species (p<0.05):petal lengths (Y) vary systematically across the three species
+# Sepal.Length (p<0.05): Petal length (Y) increased with sepal length (numerical X)
+
+# EQNS FOR DIFFERENT SPECIES 
+summary(iris$Species) 
+#factor variable with 3 levels- setosa, versi, virginica
+#factor variables: setosa is the reference
+
+## interactions between numerical terms
+## Does the association between Petal length & sepal length depend on petal width
+fit2b=lm(Sepal.Length~Petal.Length*Petal.Width,data=iris)
+summary(fit2b)
+anova(fit2b)
+```
+
+## Lecture 46: Analysis of Covariance (ANCOVA)
+Analysis of co-variance 
+```{r}
+######################################################
+################## ANCOVA: Analysis of Co-Variance-----
+
+#including categorical factor splits the relationship between x-var and y-var 
+#into several linear equations, one for each level of the categorical factor. 
+
+# ANCOVA is used to compare two or more regression lines by testing 
+#the effect of a categorical factor on a dependent variable (y-var) 
+#while controlling for the effect of a continuous co-variable (x-var).
+
+##Condn :1)linear scatter (2) normal residuls
+
+# install.packages("smatr")
+library(smatr)
+data(leaflife)
+head(leaflife)
+summary(leaflife)
+
+plot(leaflife$lma,leaflife$longev)
+
+mod1=lm(longev ~ lma*rain,data=leaflife)
+summary(mod1)
+abline(mod1)
+# regression result: interaction not significant
+
+mod2=lm(longev ~ lma+rain,data=leaflife)
+summary(mod2)
+#categorical variable is different
+#slope across different groups is different
+
+# rain has a significant effect on the dependent variable(longev)
+#significant difference in 訴ntercepts・between the regression lines 
+#of low and high rain
+
+anova(mod1,mod2)
+#Removing the interaction does not significantly affect the fit of the model
+#most parsimonious model- model2
+
+highR=subset(leaflife, rain=="high")
+lowR=subset(leaflife,rain=='low')
+
+head(highR)
+#H0: slopes don't overlap
+#if the confidence intervals of slope overlap, the slopes overlap
+
+#regression for high rain
+reg1=lm(longev~lma, data=highR)
+summary(reg1)
+confint(reg1)
+
+#regression for low rain
+reg2=lm(longev~lma, data=lowR)
+summary(reg2)
+confint(reg2)
+```
+
+## Lecture 47: Selecting the Most Suitable Regression Model
+
+Adjusted R2: 
+Adjusted R2 also indicates how well the line fits a model, but adjusts for number of terms in a model. If we add more and more useless variables to a model, adjusted r-squared will decrease. If we add more useful variables, adjusted r-squared will increase. The adjusted R2 will penalize us fo adding indepenedent variables (K in the equation) that do not fit the model.
+
+Select most parsimonious model - best fitting models with bare minimum Xs
+
+AIC (Akaike Information Criterion)
+AIC is a measure of relative quality of statistical models for a given set of data. Select the model with the lowest AIC. 
+
+Foward selection involves starting with no Xs and add new predictors one by one (testing model performance at each step). Backward selection involves starting with all model Xs and removing Xs with highest p-value by 1. Both or stepwise regression combines both. 
+
+```{r}
+# Selecting the most suitable regression model -----
+
+library(MASS)
+##examine all models
+
+head(mtcars)
+names(mtcars)
+
+# both 
+step(lm(mpg~wt+drat+disp+qsec,data=mtcars),direction="both")
+step(lm(mpg~wt+drat+disp+qsec,data=mtcars),direction="backward")
+
+## include performance of the null model as well
+null=lm(Sepal.Length~1, data=iris) #mean value of Y predicts new Ys
+full=lm(Sepal.Length~., data=iris) #include all Xs
+
+step(null, scope=list(lower=null, upper=full), direction="both")
+
+# install.packages("relaimpo")
+library(relaimpo)
+
+# Bootstrap Measures of Relative Importance (1000 samples)
+#drawing randomly with replacement from a set of data points
+fit <- lm(formula = Sepal.Length ~ Petal.Length + Sepal.Width + 
+            Petal.Width, data = iris)
+boot <- boot.relimp(fit, b = 1000, type = c("lmg","last", "first", "pratt"), rank = TRUE, diff = TRUE, rela = TRUE) 
+#different imp evaluation methods
+#lmg is the R2 contribution averaged over orderings among regressors, cf
+#last is each variables contribution when included last
+#first is each variables contribution when included first,
+booteval.relimp(boot) # print result
+plot(booteval.relimp(boot,sort=TRUE)) # plot result
+
+```
+
+## Lecture 48: Section 6 Conclusion
+- Difference between correlation and linear regression
+- Implement both paramaetric and non-parametric correlation
+- Theory and the practical implementation of linear regression
+- Conditions of linear regression modeling and how to check if they are being met
+- Multicollinearity
+- Intepreting the linear regression model and the role of ANOVA and ANCOVA
+- Model selection, AIC and quantifying variable importance
+
+# Section 7: Other Types of Regression
+## Lecture 49: Violation of linear regression conditions
+
+Parametric models are reasonably robust to this assumption and can linear regression modesl are amenable to minor deviation from the conditions of normally distributed residual.
+
+More unreliable for small sample sizes (N<30)
+
+```{r}
+# Violation of linear regression conditions 1 ----
+
+# iris dataset
+data(iris)
+head(iris)
+
+# linear model fit 
+fit1=lm(Sepal.Width ~ Petal.Width, data=iris)
+summary(fit1)
+
+## deviation from normal Q-Q line -> violation of normal distribution
+par(mfrow = c(2, 2))
+plot(fit1)
+
+qqnorm(residuals(fit1))
+qqline(residuals(fit1))
+
+hist(iris$Sepal.Width)
+```
+
+
+```{r}
+# Violation of linear regression conditions 2 ----
+
+#try a transformation of Ys
+iris$Sepal.Width.sq <- sqrt(iris$Sepal.Width) #sq root
+iris$Sepal.Width.cub <- (iris$Sepal.Width)^(1/3) #cube root
+iris$Sepal.Width.ln <- log(iris$Sepal.Width) #log
+
+hist(iris$Sepal.Width.sq)
+hist(iris$Sepal.Width.cub)
+hist(iris$Sepal.Width.ln)
+
+## Linear regression bw  square root of Y and X
+fit2 <- lm(iris$Sepal.Width.sq~iris$Petal.Width)
+summary(fit2)
+
+par(mfrow = c(2, 2))
+plot(fit2)
+
+qqnorm(residuals(fit2))
+qqline(residuals(fit2))
+```
+
+```{r}
+# Violation of linear regression conditions 3 ----
+
+## transform both X and Y
+## log-log transform
+## power law: some biological problems (such as llometric scaling) lend themselves to log-log
+##  power law is Y=a*X^b
+## simplify to log(Y)~log(X)
+## backtransformation Y (back-transform)=exp(a+b*log(X))
+
+fit3 <- lm(log(iris$Sepal.Width)~log(iris$Petal.Width))
+summary(fit3)
+
+par(mfrow = c(2, 2))
+plot(fit3)
+
+c = coef(fit3)
+a = c[1]
+b = c[2]
+
+backtrans = exp(a+ b*log(iris$Petal.Width))
+head(backtrans)
+```
+
+```{r}
+# Violation of linear regression conditions 4 ----
+
+##run Box-Cox transformation to avoid sifting through transforms
+# run the box-cox transformation
+#family of transformations designed to reduce nonnormality of the errors in a linear model
+library(MASS)
+bc <- boxcox(Sepal.Width ~ Petal.Width, data=iris)
+
+#log-likelihood function governs the selection of the lambda power transform
+# select lambda to carry out transformation
+
+trans <- bc$x[which.max(bc$y)]
+trans #use only islambda values lie bw -2 to 2
+
+fit4 <- lm(Sepal.Width^trans ~ Petal.Width, data=iris)
+summary(fit4)
+
+par(mfrow = c(2, 2))
+plot(fit4) #not all data can be transformed
+```
+
+## Lecture 50: Other regression techniques when OLS conditions are breached
+
+```{r}
+# Other regression techniques 1 ----
+
+###Robust & Resistant regression
+## use in any situation you would use OLS and have outliers
+data(faithful)
+head(faithful)
+
+fit1=lm(eruptions ~ waiting, data=faithful)
+
+par(mfrow = c(2, 2))
+plot(fit1)
+
+
+num= faithful[, 'waiting', drop=FALSE]
+head(num)
+
+p1=predict(fit1, num) #produce estimates of eruptions from fit1
+p1=as.data.frame(p1)
+
+# install.packages("Metrics")
+library(Metrics)
+
+# rmse = .4968
+rmse(faithful$eruptions,p1)
+
+library(MASS)
+
+##ROBUST REGRESSION
+## Reduce the influence of outliers
+## Downweight outliers-reduce their influence on fitted regression line
+rob<- rlm(eruptions ~ waiting, data=faithful,psi = psi.bisquare)
+#re-weighing outliers 
+#can take psi.huber, psi.hampel and psi.bisquare values.
+
+summary(rob)
+p2=predict(rob, num)
+head(p2)
+p2=as.data.frame(p2)
+# rmse = 0.4947164
+rmse(faithful$eruptions,p2)
+
+##RESISTANT REGRESSION
+## heavy tailed distribution- outlying points at end of QQ
+## neutralises the effect of outliers 
+qqnorm(residuals(fit1))
+qqline(residuals(fit1))
+
+resis <- lqs(eruptions ~ waiting, data=faithful)
+
+summary(resis)
+p2=predict(resis, num)
+head(p2)
+p2=as.data.frame(p2)
+# rmse=0.5143629
+rmse(faithful$eruptions,p2)
+
+plot(faithful$waiting,faithful$eruptions)
+
+abline(fit1, lty="dashed")
+abline(rob, col="red")
+abline(resis, col="blue")
+
+legend("bottomright", inset=0.05, bty="n",
+       legend = c("linear reg", "robust", "resistant"),
+       lty = c(2, 1, 1),      # 1 = "solid" ; 2 = "dashed"
+       col = c("black", "red", "blue")
+)
+
+##non constant variance or heteroskedasticity
+#quantile regression
+require(quantreg)
+Q25=rq(eruptions ~ waiting, data=faithful, tau=0.25)
+
+Q75=rq(eruptions ~ waiting, data=faithful, tau=0.75)
+
+anova(Q25, Q75) #H0: regression coeff are same for both
+plot(faithful$waiting,faithful$eruptions)
+abline(Q25,lty=3,col="red")
+abline(Q75,lty=3,col="blue")
+
+
+print(rq(eruptions ~ waiting, data=faithful, tau=seq(from=0.05, to=0.95, by=0.05)))
+plot(summary(rq(eruptions ~ waiting, data=faithful, tau=seq(from=0.05, to=0.95, by=0.05))))
+
+#################################################
+```
+
+## Lecture 51:Standardized Major Axis (SMA)
+```{r Standardized Major Axis (SMA)}
+############ Standardized Major Axis (SMA)
+#OR RMA
+# Linear regression may not be appropriate: 
+#i) there may be measurement error in x and y (common in observational studies)
+#ii) x and y may have different scales/UNITS
+ 
+library(smatr)
+
+#conditions: (1) Linear relation bw x and y (2) normally distributed residuals
+#used in cases of allometric models y=ax^b or log y=log a+b(log x)
+#test for common slope between DIFFERENT TREE CATEGORIES
+data(Orange)
+head(Orange)
+summary(Orange)
+
+ComSlope2 = sma(circumference ~ age * as.factor(Tree), log = "xy", data = Orange)
+summary(ComSlope2)
+
+#test for common slope between sites with different rain 
+data(leaflife)
+summary(leaflife)
+ComSlope = sma(longev ~ lma * rain, log = "xy", data = leaflife)
+summary(ComSlope)
+plot(ComSlope)
+
+#Multiple comparison
+sma(longev ~ lma * site, log = "xy", data = leaflife, multcomp = T, multcompmethod = "adjust")
+
+#site a and 4 are different
+
+
+# TESTING FOR EVIDENCE FOR A GIVEN SLOPE (OR SCALING FACTOR)
+library(MASS)
+data("Animals")
+head(Animals)
+
+plot(Animals, log = "xy")
+ft = sma(brain ~ body, data = Animals, log = "xy")
+
+#does brain size scale as the 2/3 power of body size? 
+#Brain=A*Body^2/3
+#or is slope =1 ( variables exhibit equal proportional changes, and demonstrate isometry)
+
+ft1 = sma(brain ~ body, data = Animals, log = "xy", slope.test = 1)
+ft2 = sma(brain ~ body, data = Animals, log = "xy", slope.test = 2/3)
+
+summary(ft1)
+summary(ft2)
+```
+
+## Lecture 52: Polynomial and Non-linear regresson
+```{r Polynomial and Non-linear regression 1}
+
+# Polynomial & Non-linear
+##To fit models that can not be fitted using linear models
+## e.g. relationship bw x and y is non-linear- curvilinear
+# linear in the coefficients b1, b2
+#though it may contain terms that are non-linear in the X痴 (such as squared terms of X)
+q
+q=seq(0,100,1)
+p =0.6
+y=500 + p*(q-10)^3
+plot(q,y,type='l',col='red',main='Nonlinear relationship',lwd=5)
+
+data("ChickWeight")
+head(ChickWeight)
+
+cw1 <- subset(ChickWeight,Diet=='1')
+head(cw1)
+plot(weight ~ Time, data = cw1)
+
+#wts <- cw1$weight
+#times <- cw1$Time
+#times2 <- times*times
+#times3 <- times*times2
+fit1= lm(weight ~ Time, data = cw1)
+summary(fit1)
+AIC(fit1)
+fit2= lm(weight ~ Time+ I(Time*Time), data = cw1)
+summary(fit2)
+AIC(fit2)
+fit3=lm(weight ~ Time+ I(Time*Time)+I(Time*Time*Time), data = cw1)
+summary(fit3)
+AIC(fit3)
+
+#variables inside I are correlated and that can be a problem
+# produce orthogonal polynomials using poly()
+fit2a= lm(weight ~ poly(Time,2), data = cw1)
+summary(fit2a)
+AIC(fit2a)
+fit3a= lm(weight ~ poly(Time,3), data = cw1)
+summary(fit3a)
+AIC(fit3a)
+
+##Non linear regression
+##Linear models cannot be used, e.g.in case of growth equations or radiocative decay
+
+# install.packages('nls2')
+library(nls2) #earlier version nls
+
+data("Loblolly")
+str(Loblolly)
+head(Loblolly)
+
+plot(Loblolly$age,Loblolly$height)
+
+x = Loblolly$age
+y =Loblolly$height
+
+m <- nls(y ~ a + b * I(x^z), start = list(a = 1, b = 1, z = 1))
+m
+#nls needs strating values of a b z
+#a=Asym, b=xmid, z=scal
+#Asym:  numeric parameter representing the asymptote
+#xmid: x value at inflection
+#scal : scale parameter
+
+lines(x, fitted(m), lty = 2, col = "red", lwd = 2)
+
+qqnorm(residuals(m))
+qqline(residuals(m)) #residuals need to be normally distributed
+
+#compute R2
+RSS=sum(residuals(m)^2) #residual sum of squares
+TSS=sum((y - mean(y))^2) # total sum of sqaures
+R.square=1 - (RSS/TSS)
+R.square
+```
+
+```{r Polynomial and Non-linear regression}
+
+######### In case when we don't know the starting values
+# we can use a self-starter function
+# SSlogis: helps create the initial estimates of parameters
+getInitial(height ~ SSlogis(age,  Asym, xmid, scal), data = Loblolly)
+#Asym:  numeric parameter representing the asymptote
+#xmid: x value at inflection
+#scal : scale parameter
+
+y.ss <- nls(height ~ SSlogis(age, Asym, xmid, scal), data = Loblolly)
+summary(y.ss)
+
+alpha <- coef(y.ss)  #extracting coefficients
+plot(height ~ age, data = Loblolly, main = "Logistic Growth Model of Trees", 
+     xlab = "Age", ylab = "Height")  # Census data
+
+curve(alpha[1]/(1 + exp(-(x - alpha[2])/alpha[3])), add = T, col = "blue")  # Fitted model
+
+# fit the growth equation  Asym/(1+exp((xmid-input)/scal))
+qqnorm(residuals(y.ss))
+qqline(residuals(y.ss))
+#############Gompertz growth model 
+###Asym*exp(-b2*b3^x)
+
+fm1 <- nls(height ~ SSgompertz(log(age), Asym, b2, b3),
+           data = Loblolly)
+summary(fm1)
+
+alpha <- coef(fm1)
+
+qqnorm(residuals(fm1))
+qqline(residuals(fm1))
+
+############ We can use a Growth function
+#Chapman richard growth model- where tree height growth is modeled as
+#function of time
+
+# Define function
+
+chapm <- function(x,Asym,b,c)Asym*(1-exp(-b*x))^c
+
+#Asym is the maximum value of growth
+#c is related to catabolism (destructive metabolism); maximum value 3
+# 1-exp function helps define actual growth
+
+nls_lob <- nls(height ~
+                 chapm(age, Asym, b,c),
+               data=Loblolly,
+               start=list(Asym=100, b=0.1, c=2.5))
+                 
+library(nlshelper)               
+plot_nls(nls_lob, ylim=c(0,80), xlim=c(0,30))
+```
+
+## Lecture 53: Linear Mixed Effect Model
+
+```{r LINEAR MIXED EFFECT MODEL 1}
+#### Regression models: modelled the impact of fixed effects.
+#are constant across individuals,
+#### Mixed effect models- account for random effects
+#vary across individuals
+#Effects are fixed if they are interesting in themselves 
+#or random if there is interest in the underlying population
+
+library(lme4)
+
+### specify random effect:  (1 | grouping factor) )
+### random effect model generated for each level of grouping factor
+### provide another way to quantify individual differences.
+
+#experiment on the effect of diet on early growth of chicks
+#allowing for individual variability in weight of each Chick (random)
+#(in technical terms, a random intercept for each Chick: (1 | Chick) )
+
+head(ChickWeight)
+model = lmer(log(weight) ~ Time*Diet + (1 | Chick), data=ChickWeight,REML=F)
+summary(model)
+```
+
+
+```{r LINEAR MIXED EFFECT MODEL 2}
+#Model parameters are computed using maximum likelihood estimates using REML=F
+
+##fixed effects of diet & time on the intercept
+#a constant difference in weights among chicks 
+#randomly assigned to different diets
+#random intercept model
+model2 = lmer(log(weight) ~ Time+Diet + (1 | Chick), data=ChickWeight,REML=F)
+summary(model2)
+```
+
+```{r LINEAR MIXED EFFECT MODEL 3}
+
+#impact ofinteraction bw diet and time
+# quantify the impact on 
+#the slope (i.e., effects of diet on the rate of growth)
+model3 = lmer(log(weight) ~ Time*Diet + (1 | Chick), data=ChickWeight,REML=F)
+summary(model3)
+
+coef(summary(model3))
+
+anova(model2,model3)
+##Is the interaction between time and diet significant?
+#interaction bw time and weight is signidicant
+# all four diets influence weight gain differently
+
+coeffs <- coef(summary(model3))
+p <- pnorm(abs(coeffs[, "t value"]), lower.tail = FALSE) * 2
+
+library(ggplot2)
+ggplot(fortify(model2), aes(Time, weight, color=Diet)) +
+  stat_summary(fun.data=mean_se, geom="pointrange") +
+  stat_summary(aes(y=.fitted), fun.y=mean) #diets influence wt gain
+
+##impact of diet 1 on checken weight
+exp(0.0765) #a 7.9% increase
+
+#impact of diet 2
+exp(0.067+0.048) #12.1% increase in weight 
+
+##Random slopes (no random intercept): allowing for a different average slope for each diet
+model4 = lmer(log(weight) ~ Time*Diet +  (0 + Time | Chick), data=ChickWeight,REML=F)
+
+summary(model4)
+
+library(lsmeans)
+library(lmerTest)
+
+Clst <- lstrends (model4, ~ Diet, var = "Time")
+#estimate and compare the average
+#slopes for each diet
+
+## for random slope & intercept : (1 + Time | Chick)
+```
+
+## Lecture 54: Generalized Linear Models (GLMs)
+
+- Erro structure
+GLMs are used when the residuals are neither normally distributed nor could be made normal. 
+
+- Proportions (e.g., infection rates, survival rates)
+- Count data (e.g., insects on a leaf, trees in a plot)
+- Binary responses (dead, alive)
+
+Flexible generalization of ordinary linear regression. Often we seek to explain non-normal response data using explanatory variables.
+
+Yijk = a + b1x1 + ... + eijk
+
+GLMs are used for understanding what external influences (proxy being independent variables) drive change in the response variable.
+
+Implementation of GLMs require the residuals to have an alternative ditribution and we can analyze the relationship between response and predictors with regression, using GLMs. 
+
+### How do GLM Works
+The GML generalizes linear regression by allowing the linear model to be related to the response variable (Y) via a link function. 
+
+Non-normal error structures can be included. 
+
+Residual distributions/error structure of the variable Y from the exponential family can be considered within the GLM framework(e.g., normal, Poisson, binomial, gamma)
+
+Link function -g() is used which is a transformation of Y used to linearize its values. 
+
+ni = g(yi)
+
+The linear predictor of predictor variables, Xj, to reression agaist the transformed response. 
+
+ni = a + b1x1 + b2x2
+
+Common link functions are as follows.
+---
+Error: Link: Link function
+Gaussian: identity: $n=y$
+Poisson: Log: $n=ln(y)$
+Binomial: Logit: $n=ln(p/(1-p))$
+---
+
+Two of the most common GLM models
+1. Logistic Regression
+Used in case when the response variable is binary (0 or 1) and the error structure is assumed to be binomial
+2. Poission Regression 
+Used for count data and the error structure is assumed to be Poisson
+
+# Lecture 55: Logistic Regression with R
+
+Carried out in a situation when Y is categorical (e.g., binary categorical variable like yes/no, 0/1) and predictions are numerical
+
+H0: probability of a particular value of the nominal variable is not associated with the value of the measurement variable
+
+F(x) or P(Y) is the probability of y equaling sucess of y=1
+
+$$
+F(x)=\frac{1}{1+e^{-(\beta_0+\beta_1x)}}
+$$
+
+Logit: (1) linear regression needs a linear reln bw x and y, (2) This condition is violated in case Y is categorica, (3) Logarithmic transformation is used for expressing the no-linear reln bw in a linear way - logit
+
+Deviance is used for comparaing models, odds=exp(B), ie. probability of sucess =p/1-p. 
+
+Assumption (1) linear reln bw X and logit of Y, (2) independence error, (3) erros don't have to be normally distributed.
+
+## Logistic Regresion
+```{r}
+############## Logistic regression
+#sinosuidal shaped data- variance decreases towards 0 and 1
+#binomial 
+
+library(ggplot2)
+ggplot(mtcars, aes(x=wt, y=am)) + geom_point() + 
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE)
+
+fitglm= glm(am~hp+wt, data=mtcars,family=binomial(link='logit'))
+#specify binomial distribution for logistic regression
+
+coef(fitglm)
+exp(coef(fitglm)) #odss of succes/ Y=1
+summary(fitglm)
+
+#The null deviance shows how well the response variable is 
+#predicted by a model that includes only the intercept (grand mean).
+#DF number of observations-1
+
+#The residual deviance shows how well the response variable is 
+#predicted by a model that includes both predictor vars (DF declines by 2 more)
+
+#residual deviance for a well-fitting model 
+#should be approximately equal to its degrees of freedom
+```
+
+## Model Fit 
+```{r}
+#-----------------------------------
+
+# how well does the model fit the data
+#Hosmer and Lemeshow goodness of fit (GOF) test
+#install.packages('ResourceSelection')
+library(ResourceSelection)
+hoslem.test(mtcars$am, fitted(fitglm))
+
+#model appears to fit well 
+#we have no significant difference between the model and the observed data (i.e. the p-value is above 0.05)
+
+```
+
+## Prediction
+```{r}
+## for predicting values of unseen data
+newdata = data.frame(hp=120, wt=2.8)
+predict(fitglm, newdata, type="response") 
+```
+
+## Overdispersion
+```{r}
+#Overdispersion means that the data show 
+# discrepancies between the observed responses yi and their predicted values 
+#larger than what the binomial model would predict
+#overdispersion is present in a dataset, the estimated standard errors and test statistics 
+#the overall goodness-of-fit will be distorted
+
+library(arm)
+
+x=predict(fitglm)
+y=resid(fitglm)
+
+binnedplot(x,y) #most of the data fall in -2 to 2 standard error
+# no overdispersion
+```
+
+```{r}
+########## binomial count data
+#### logistic data for other cases with sinosuidal shape
+### variance decreases towards 0 and 1
+### binomial distribution
+
+# install.packages('AICcmodavg')
+library(AICcmodavg)
+
+data(beetle)
+head(beetle)
+b=beetle
+
+head(b)
+
+qplot(Dose,Mortality_rate,data=beetle)
+
+b$survive=b$Number_tested-b$Number_killed
+
+fitglm2= glm(cbind(Number_killed,survive)~Dose,data=b,family=binomial)
+ #logistic transformation converts proportions to logits
+
+summary(fitglm2)
+#robust fit  residual deviance/redsidual df are almost 1:1
+ 
+#check overdispersion
+x=predict(fitglm2)
+y=resid(fitglm2)
+
+binnedplot(x,y)
+```
+
+# Lecture 56: Possion Regression in R
+
+```{r}
+
+```
+
+```{r}
+############# Poisson
+#### for count data
+#### 1) being discrete, and 2) having variance that generally increases with the mean 
+
+setwd("F:\\Basic to Advanced Linear Modelling\\Data")
+
+c=read.csv("canopycvr1.csv")
+attach(c)
+head(c)
+
+mean(c$cover)
+var(c$cover)
+
+#data mean and data variance are roughly similar- meets consitions of Poisson
+
+#predict variation in canopy cover as a function of elevation
+fit= glm(cover~elev,data=c, family=poisson(link=log))
+summary(fit)
+
+cf=coef(fit)
+cf
+
+#for a unit increase in elevation the increase in cover is e^b
+
+exp(cf[2]) #with every unit increase in elevation
+#cover increases by a factor of 1.002
+#inverse of the link function
+
+
+#model selection
+
+fit2= glm(cover~elev+tci,data=c, family=poisson)
+summary(fit2)
+
+## compare models
+
+anova(fit,fit2,test="Chisq")
+ #adding the new term, tci has not improved model performance
+
+## categorical qualitative variable
+
+fit3 = glm(cover~disturb*elev,data=c,family=poisson)
+summary(fit3)
+#disturbance is a significant ineraction
+
+#higher cover in undisturbed forest
+
+## in case of overdispersed data use negative binomial regression
+library(MASS)
+#glm.nb
+
+fit= glm.nb(cover~elev,data=c)
+summary(fit)
+```
+
+# Section 8: Multivariate Analysis
+
+
+
+# Section 9: Miscellaneous Lecture & Information
+
+
+
