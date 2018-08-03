@@ -409,7 +409,7 @@ get an automated exponential smoothing model by `est()` - automated or `hw()`.
 Do these models have high accuracy? 
 To answer this question, we should splot test/training set, and corss validate by `tsCV()`.
 
-## LEcture 17: Project II Script
+## Lecture 17: Project II Script
 ```{r}
 
 # Data load
@@ -476,14 +476,14 @@ forecastarima = function(x,h){
   forecast(auto.arima(x),stepwise=T,approximation=F,h=h)
 }
 
-esterror=tsCV(germaninfl,forecastets,h=1)
-arimaerror=tsCV(germaninfl,forecastarima,h=1)
+# esterror=tsCV(germaninfl,forecastets,h=1)
+# arimaerror=tsCV(germaninfl,forecastarima,h=1)
 
-mean(esterror^2,na.rm=T)
-mean(arimaerror^2,na.rm=T)
+# mean(esterror^2,na.rm=T)
+# mean(arimaerror^2,na.rm=T)
 ```
 
-## Lecsson 18: Seasonal Decomposition
+## Lesson 18: Seasonal Decomposition
 Date:7/17
 Seasonal decomposition is an old analytical method, but useful for dividing the data into its components:
 - trend
@@ -787,7 +787,7 @@ no API connection is required, in the getSymbols()
 - argument `src =""`: "google","yahoo","oanda","MySQL"
 - variation of `getSymbols()`: getSymbols.google(), getSymbols.yahoo(), getSymbols.MySQL()
 
-```{r}
+```{r eval=FALSE}
 # activate the package "quantmod"
 library(quantmod)
 
@@ -823,7 +823,7 @@ w <- curl::curl_fetch_memory("https://finance.yahoo.com",curl::new_handle(verbos
  - Seasonal patterns cannot be identified 
 
 We plot the data
-```{r}
+```{r eval=FALSE}
 # data visualization
 plot(as.ts(novartis$NVS.Open))
 ```
@@ -834,7 +834,7 @@ plot(as.ts(novartis$NVS.Open))
 Getting started with irregular spaced time series data, most time series functions and models don't work effectively on irregularly spaed data. Some teqniques help to get a basic ide about the data even if irregulaly spaced.
 
 The first option is plot the data
-```{r}
+```{r eval=FALSE}
 # activate quantmod library
 library(quantmod)
 
@@ -848,7 +848,7 @@ library(forecast)
 ggtsdisplay(novartis$NVS.Open)
 ```
 
-```{r} 
+```{r eval=FALSE}  
 # ARIMA model
 novartisarima = auto.arima(novartis$NVS.Open,
                            stepwise=T,
@@ -863,7 +863,7 @@ novartisarima2
 ```
 
 
-```{r}
+```{r eval=FALSE}
 # Forecast arima
 plot(forecast(novartisarima,h=20))
 plot(forecast(novartisarima2,h=20))
@@ -878,7 +878,7 @@ The feature of the above optimal model's plot is;
 When we see the alternative **ARIMA** model, it is not that different. The ARIMA models assume that the last observation is indicative of the next one. Prior obsevations don't matter much.
 
 Then, we construct a **ETS(exponential smooothing)** model for Novatis stock data. It does not look different, the model is based on M (multipled initial level), no trend nor seasonality, several of the last observations are considered. 
-```{r}
+```{r eval=FALSE}
 # ETS model
 novartisets = ets(novartis$NVS.Open)
 # Forecast model
@@ -893,7 +893,7 @@ As a conclusion, clear and actionable patterns are hard to extract.Tiny advantag
 For the above things, pre-processing is required to answer those type of question, and converted to regular time series data.
 
 ## Lecture 25: Project III Script
-```{r}
+```{r eval=FALSE}
 # Fetching data from yahoo with quantmod
 library(quantmod)
 
@@ -998,13 +998,13 @@ e.g., Is there any pattern in the trading days?
 
 
 ### Conversion to a data frame
-```{r}
+```{r eval=FALSE}
 novartis=as.data.frame(novartis)
 ```
 
 
 ### Add the row names as date
-```{r}
+```{r eval=FALSE}
 novartis %>% 
   mutate(Date=rownames(novartis)) %>% 
   as.Date(Date)
@@ -1018,7 +1018,7 @@ head(novartis)
  - data class=as.Date("")
 - Parameter "by" to specify the step size
 
-```{r}
+```{r eval=FALSE}
 # creating the date column, "by" can be either nr days or 
 # "from" and "to" with as.Date to make sure this is a date 
 
@@ -1044,7 +1044,7 @@ mydates=tibble(Date=mydates)
 - All rows of object Y get included
  - Results in a full join of the two data frames
  
-```{r}
+```{r eval=FALSE}
 mydata = merge(novartis, mydates,by="Date",all.y=T)
 ```
 
@@ -1053,7 +1053,7 @@ mydata = merge(novartis, mydates,by="Date",all.y=T)
  - Impute holiday prices with `na.locf()`
  
  First of all subset the data
-```{r}
+```{r eval=FALSE}
 mydata=mydata[5:366,]
 
 # Removing Sundays, watch the from 
@@ -1068,7 +1068,7 @@ For the above Holiday extraction, we use seq()
 - sequence generation function of R base: `seq()`
 - `Form` = the first observation to be removed
 - `To`= the last observation of the dataset
-```{r}
+```{r eval=FALSE}
 mydata =
   mydata[-(
     seq(
@@ -1077,8 +1077,91 @@ mydata =
       by=7)),]
 ```
   
+To confirm the process:
+1) Converting the original dataset into a data frame
+2) Create a second data frame with all the calender days
+3) Merging the two data frames
+4) Remove all the Saturdays and Sundays
+5) Impute Holiday prices with a last observation carried foward method
 
 
+## Lecture 27: Visually analyzing the data
 
+We convert the time-series data with frequency five.
+
+- Extracting the highest prices
+- Name of the `ts` object to be created
+- Time series, convert the data to numeric
+- frequency to five
+
+```{r}
+# Putting the close price into a weekly time series
+library(tidyverse)
+
+# supplement sample data
+mydata <- tibble(
+  High=c(2.5,3,3.5,4,4,3,5,5.5,
+  6,7,13,25,26,26.5,25,25.5,27,29,30)
+)
+mydata
+
+
+highestprice =
+  ts(
+    as.numeric(mydata$High),
+    frequency=5
+  )
+plot(highestprice)
+```
+
+Plotting the weeks against each other, two functions are useful: `seasonaplot()` and `ggseasonaplot()`.
+```{r}
+library(forecast)
+
+seasonplot(highestprice,season.label=c("Mon","Tue","Wed","Thu","Fri"))
+monthplot(highestprice)
+monthplot(highestprice,base=median,col.base="red")
+plot(stl(highestprice,s.window="periodic"))
+
+
+# comparison with the low prices
+mydata1 <- tibble(
+  Low=c(2,2.3,2.5,4.5,3,3.5,3,4.5,
+  5,6,12.5,23,25,25.5,24,25,25,27,28)
+)
+mydata2 <- bind_cols(mydata1,mydata)
+mydata2
+lowestprice =ts(as.numeric(mydata2$Low),
+                frequency=5)
+
+# data plot check
+par(mfrow=c(1,2))
+monthplot(lowestprice,base=median,col.base="red")
+monthplot(highestprice,base=median,col.base="red")
+par(mfrow=c(1,1))
+```
+
+# Section 5: Project IV Neural Networks: Neural Nets and Interactive Graphs
+## Lecture 39: Mission Statement
+
+**Step 1: Data pre-processing**
+1) Clean the data, as real world date often needs to be cleaned prior to analysis. People collecting data are not always trained in data science. 
+2) A time consuming process
+The goal is to prepare a numeric time series format, missing data imputed, and outlier detection and replacement.
+3) Tools
+`tidyr` package - `separate()`
+`forecast` package - `tsclean()`
 
  
+**Step2: Modeling the data**
+1) Neural network model
+forecast 36 months using `forecast` package - `nnetar()`, Seasonal changes 
+
+**Step3: Data visualization using the Interactive chart**
+1) Interative data visualization
+Plot the model and the forecast, using interactive chart (zoom-in tool, reveal more detail upon hovering) - `dygraphs` package
+2) Further option R Shiny
+
+## Lecture 29: Getting familar with ras dataset
+
+
