@@ -1,15 +1,17 @@
 ---
-title: "Time Series Analysis"
+title: "Applied Time Series Analysis and Forecasting with R"
 author: "Koji Mizumura"
-date: "2018.07.25･"
+date: "2018.08.09"
 output:
   word_document: default
   html_document: default
   pdf_document: default
 ---
 
+https://eylearning.udemy.com/r-applied-time-series-analysis-forecasting-r-projects-r-tutorials/learn/v4/t/lecture/11010476?start=0
+
 # Section 1
-## LEcture 3: Main Functions
+## Lecture 3: Main Functions
 
 (1) Basic functions in R Base are:
 - decompose()
@@ -712,8 +714,8 @@ forecastarima=
 We also need to defice cross validation. 
 
 ```{r}
-etserror=tsCV(germaninfl,forecastets,h=1)
-arimaerror=tsCV(germaninfl,forecastarima,h=1)
+# etserror=tsCV(germaninfl,forecastets,h=1)
+# arimaerror=tsCV(germaninfl,forecastarima,h=1)
 ```
 
 The `tsCV()` results in a vector containing errors between forecasts and actual values. 
@@ -725,8 +727,8 @@ We choose a metric of forecast accuracy
 The difference between two errors, root of the results or not. The better model with lower error is the ARIMA model.
 ```{r}
 # error calculation
-mean(etserror^2,na.rm=T)
-mean(arimaerror^2,na.rm = T)
+# mean(etserror^2,na.rm=T)
+# mean(arimaerror^2,na.rm = T)
 ```
 
 Alternatively, we can go with the following options. 
@@ -1152,7 +1154,6 @@ The goal is to prepare a numeric time series format, missing data imputed, and o
 `tidyr` package - `separate()`
 `forecast` package - `tsclean()`
 
- 
 **Step2: Modeling the data**
 1) Neural network model
 forecast 36 months using `forecast` package - `nnetar()`, Seasonal changes 
@@ -1164,4 +1165,260 @@ Plot the model and the forecast, using interactive chart (zoom-in tool, reveal m
 
 ## Lecture 29: Getting familar with ras dataset
 
+Several cleaning steps are required for the dataset. PRoblems to be fixed are 1) missing data, 2) outliers, 3) poor formating (quotations) and 4) data type.
 
+The data is about the restaurant at a campsite:
+- open the whole year
+- peak season in summer
+- seasonal data
+
+Once a data is properly cleanied, 
+- trend might be present
+- revenue by month in USD
+- 1997-2016
+
+The data set is donwloadable from the Udemy website.
+
+## Project IV script
+```{r eval=FALSE}
+## Import Data Camping_Revenue as revenue
+
+# check the quotes while importing to get 2 columns
+class(revenue$V2)
+
+# chopping off the useless quotes at 2 positions
+library(tidyr)
+revenue <- separate(revenue, col = V2, 
+                    sep = c(2, -3), 
+                    into = c("rest", "data", "rest2"))
+
+# all the relevant data is in column "data"
+head(revenue)
+
+# class is still a character (with some missing data)
+class(revenue$data)
+
+# conversion to time series
+myts <- ts(as.numeric(revenue$data),
+           start = 1997, frequency = 12)
+
+# data is still not clean (outliers and NAs)
+summary(myts)
+
+# all in one cleaning tool
+library(forecast)
+myts <- tsclean(myts)
+
+# check the data
+summary(myts)
+
+plot(myts)
+
+# set up a Neural Network model
+mynnetar <- nnetar(myts)
+
+# forecasting 3 years with the model
+nnetforecast <- forecast(mynnetar, h = 36,
+                         PI = T)
+library(ggplot2)
+autoplot(nnetforecast)
+
+## interactive dygraph
+
+# data we need for the graph
+data <- nnetforecast$x
+lower <- nnetforecast$lower[,2]
+upper <- nnetforecast$upper[,2]
+pforecast <- nnetforecast$mean
+
+mydata <- cbind(data, lower, upper,
+                pforecast)
+
+library(dygraphs)
+
+dygraph(mydata, main = "Oregon Campsite Restaurant") %>% 
+  dyRangeSelector() %>% 
+  dySeries(name = "data", label = "Revenue Data") %>%
+  dySeries(c("lower","pforecast","upper"), label = "Revenue Forecast") %>%
+  dyLegend(show = "always", hideOnMouseOut = FALSE) %>%
+  dyAxis("y", label = "Monthly Revenue USD") %>%
+  dyHighlight(highlightCircleSize = 5,
+              highlightSeriesOpts = list(strokeWidth = 2)) %>%
+  dyOptions(axisLineColor = "navy", gridLineColor = "grey") %>%
+  dyAnnotation("2010-8-1", text = "CF", tooltip = "Camp Festival", attachAtBottom = T)
+```
+
+## Lecture 31: Cleaning with `tidyr`
+
+1. Import the data into RStudio
+2. Remove the quotes (part of the dataset)
+3. Convert the data into a time series
+4. Detecting and replacing missing data and outliers
+
+```{r}
+# package
+library(tidyverse)
+library(lubridate)
+
+# tidyverse
+# revenue <- read.csv("C:/Users/kojikm.mizumura/Desktop/Data Science/1. Udemy/Applied Time Series and Forecasting with R/camping-revenue-97-17.csv",sep=',',header=F,quote="\"")
+
+# revenue <- read_csv("U:/2. Data Science/1. Udemy/Applied Time Series and Forecasting with R/camping-revenue-97-17.csv",col_names=F)
+
+camping.revenue.97.17 <- read.csv("U:/2. Data Science/1. Udemy/Applied Time Series and Forecasting with R/camping-revenue-97-17.csv", header=FALSE, quote="")
+
+revenue <- camping.revenue.97.17
+head(revenue)
+```
+
+We chop off the useless quote in the data by using the `tidyr` package. 
+- Name of the object to be updated
+- Function `separate()` to separate strings
+  - Data to be used
+  - column to work with
+  - Index position of characters where to separate - '''|16857|'''
+  (2 characters from the left, 3 characters from the right)
+  - columns to be created   ("rest","data","rest2")
+```{r}
+library(tidyr)
+revenue <- 
+  separate(revenue,
+           col=V2,
+           sep=c(2,-3),
+           into=c("rest","data","rest2"))
+head(revenue)
+```
+
+Upon the above conversion, we would change the data type of the variable `data` into time series. 
+```{r}
+# conversion to time series
+myts <- ts(as.numeric(revenue$data),
+           start=1997,frequency=12)
+summary(myts)
+plot(myts)
+```
+
+The max and min are obviously outliers, thus, we would apply `tsclean` function for linear interpolation.
+```{r}
+library(forecast)
+myts <- tsclean(myts)
+
+# outlier was adjusted by tsclean()
+summary(myts)
+plot(myts)
+```
+
+In this lecture, we learned 1) import the data into RStudio, 2) Remove the quotes by `separate()` from tidyverse 3) Conversion of the data into time series by `as.numeric()`, `ts()`, and 4) Detecting and replacing missing data and outliers by `tsclean()`.
+
+## Lecture 32: Fitting the neural net model
+
+In this lecture,we will learn
+1) Data pre-processing by `tidyr` `forecast`
+2) Modeling based on neraul nets by `forecast`
+3) interactive data visualization by `dygraphs`
+
+The neural net is simplied by one output layer and multiple inputs/layers with hidden layers, called multilayer feed foward network.
+
+NNAR-Neural Network Autoregression Model
+
+- output - NNAR(p,k) output - NNAR(14,8)
+- p lagged values - input 8 nodes(hidden layers)
+- k nodes are present -  Last 14 lags as input
+
+In the forecast package, we have a function `nnetar()`. In such function we have a input $p$ to set the number of inputs. 
+```{r}
+## set up a Neural Network Model
+mynnetar <- forecast::nnetar(myts)
+
+# forecast 3 years with the model
+## PI - prediction interval = TRUE (default is FALSE)
+nnetforecast <- forecast(mynnetar,h=36,PI=T)
+
+library(ggplot2)
+nnetforecast
+autoplot(nnetforecast)
+```
+
+
+The model recognizes that there is a seasonal pattern the summer usually yields a much higher revenue, and the winter does. Interstingly, the yearly peaks of the forecast new stay at an even level in this three year forecast, and the below are ascending. The hear shows the NNAR(3,1,2)[12], which are 3 obs, 1 obs in the last seasonal cycle (total input = 4) conpressed to two hidden layers. 
+
+## Lecture 33: Interactive graphs with dygraphs
+
+Web-based application - Shiny
+- Local - viewed tab
+- RShiny web server
+- Markdown document
+
+Library `dygraphs`  - implementation of `dygraphs` JS library
+- good quality
+- good documentation
+- pipe operator `%>%` 
+
+```{r}
+# interactive dygraph
+# data we need for the graph
+data <- nnetforecast$x
+lower <- nnetforecast$lower[,2]
+upper <- nnetforecast$upper[,2]
+pforecast <- nnetforecast$mean
+
+# library(dplyr)
+# bind_cols(list(data,lower,upper,pforecast))
+
+mydata <- cbind(data,lower,upper,pforecast)
+head(mydata)
+```
+
+The script structure is 
+```{r eval=FALSE}
+library(dygraphs)
+
+# Fetch the data frame and add a title
+dygraph(mydata,main="Oregon Campsite Restaurant") %>%
+  dyRangeSelector() %>% 
+  # zoom in tool
+  dySeries(name="data",label="Revenue Data") %>% 
+  # add the time series with a label
+  dySeries(c("lower","pforecast","upper","Revenue Forecast")) %>%
+  # add the forecast, the 95% lower and uppoer CI boundaries and a label
+  dyLegend(show="always",hideOnMouseOut = FALSE) %>% 
+  # add a legend (time series + forecast); always show the legend
+  dyAxis("y",label="Monthly Revenue USD") %>% 
+  # add axis labels
+  dyHighlight(highlightCircleSize = 5,
+              highlightSeriesOpts = list(strokeWidth=2)) %>% 
+  # add highlighting effect - enlarged circle for selected data point + bold line for selected series
+  dyOptions(axisLineColor = "navy",gridLineColor = "grey") %>%   # set axia and gridline colors
+  dyAnnotation("2010-8-1",text="CF",tooltip = "Camp Festival",attachAtBottom = T)
+  # add an annotation with tooltip to the timeline, where the `Camp Festival` took place 
+library(magrittr)
+```
+
+```{r eval=FALSE}
+data <- nnetforecast$x
+lower <- nnetforecast$lower[,2]
+upper <- nnetforecast$upper[,2]
+pforecast <- nnetforecast$mean
+
+mydata <- cbind(data, lower, upper,
+                pforecast)
+
+dygraph(mydata, main = "Oregon Campsite Restaurant") %>% 
+  dyRangeSelector() %>% 
+  dySeries(name = "data", label = "Revenue Data") %>%
+  dySeries(c("lower","pforecast","upper"), label = "Revenue Forecast") %>%
+  dyLegend(show = "always", hideOnMouseOut = FALSE) %>%
+  dyAxis("y", label = "Monthly Revenue USD") %>%
+  dyHighlight(highlightCircleSize = 5,
+              highlightSeriesOpts = list(strokeWidth = 2)) %>%
+  dyOptions(axisLineColor = "navy", gridLineColor = "grey") %>%
+  dyAnnotation("2010-8-1", text = "CF", tooltip = "Camp Festival", attachAtBottom = T)
+```
+
+## Lecture 34: Course summary
+Recommended books
+1) Forecasting with Exponential Smoothing by Rob Hyndman
+2) Time series analysis ,forecasting and control by Box, Jenkins,Reinsel, Ljung
+3) Forecasting with Dynamic Regression Models by Alan Pankratz
+4) Multivariate Time Series Analysis by Ruey Tsay
+5) Forecasting: Principles and Practice by Rob Hyndman
