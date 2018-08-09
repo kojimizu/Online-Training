@@ -10,4 +10,4 @@ From 2018 February to April
 From 2018 April to July
 
 4. Applied time series analysis 
-From 2018 July - 
+From 2018 July - August (fin)  
