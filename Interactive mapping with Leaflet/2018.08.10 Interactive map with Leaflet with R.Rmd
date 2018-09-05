@@ -1,0 +1,696 @@
+---
+title: "Interactive map with Leaflet"
+author: "KM"
+date: "August 19, 2018"
+output:
+  html_document:
+    theme: lumen
+    toc: yes
+    toc_float: yes
+  word_document:
+    toc: yes
+---
+
+# Chapter1: Setting up interactive web maps
+
+DataCamp: [Interactive map with leaflet by R](https://campus.datacamp.com/courses/interactive-maps-with-leaflet-in-r/setting-up-interactive-web-maps?ex=1)    
+
+Github repo
+https://rstudio.github.io/leaflet/
+
+## What is Leaflet
+Leaflet
+- open-source JS library
+- popular option for creating interactive mobile-friendly maps
+- can be created using only R code via `htmlwidgets` package
+
+Please note that there is `mapView()` package for the interactive geogprahical visualization.
+```{r library load, echo=FALSE,include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(leaflet)
+library(magrittr)
+```
+
+
+Create our first leaflet map
+```{r create leaflet initial, echo=FALSE}
+leaflet() %>% 
+  addTiles()
+```
+
+
+## Map tiles - provider Tiles
+
+When we select a Base Map, we should consider;
+1) Why are you making this map (e.g., EDA, deliverable product)?
+2) What type of data are you plotting? (e.g., Points, paths, polygons)
+
+The leaflet packages comes with 100+ provider tiles.The names of these tiles are stored in a list named `providers` We can explore leaflet provider tiles by `str_detect()` in the **stringr** package.
+
+```{r}
+names(providers)[1:5]
+names(providers)[str_detect(names(providers),"OpenStreetMap")]
+```
+
+
+#### AddProviderTiles()
+`addProviderTiles()`
+- replaces `addTiles()` with `addProviderTiles()` to change your basemap
+- Pass name of provider tile to `addProviderTiles()`
+```{r eval=FALSE}
+leaflet() %>% 
+  addProviderTiles("OpenStreetMap.BlackAndWhite")
+```
+
+# Setting the default map view
+## Geocoding in R
+A common approach is to use the `geocode()` function in the **ggmap** package. Return the latitude and longtitude of an address or a place name.
+
+```{r eval=FALSE,include=FALSE}
+install.packages("ggmap")
+```
+
+```{r}
+library(ggmap)
+geocode("350 5th Ave, New York, NY 10118")
+geocode("Kanagawa, Japan")
+```
+
+The geocoding in R II is described as: 
+API limits the number of queiries.
+
+```{r eval=FALSE}
+geocode(location,
+        output=c("latlon","latlona","more","all"),
+        source=c("google","desk"))
+```
+
+## Setting the default map view
+There are two common approaches to setting the default view of the map: `setView()` and `fitBounds()`.
+
+- `setView()` allows you to pick a single point at the center of the map. `setView()` is used to easily iterate through different possibilties.
+- `fitBounds()` rectangle - we specify two diagonal corners of a rectangle. 
+
+**`setView()`**
+```{r}
+leaflet() %>% 
+  addTiles() %>% 
+  setView(lng=-73.9875,
+          lat=40.74856,
+          zoom=13)
+
+leaflet() %>% 
+  addTiles() %>% 
+  setView(lng=139.6423,
+          lat=35.44751,
+          zoom=13)
+```
+
+**fitBounds()**
+`fitBounds()`
+
+```{r}
+leaflet() %>% 
+  addTiles() %>% 
+  fitBounds(
+    lng1=-73.910,lat1=40.773,
+    lng2=-74.060,lat2=40.723)
+```
+
+## Staying focused
+The way to accomplish the map being focused on a particular gepgraphicac area is 1) turn offf the ability to pan the map and to limit the allowed zoom levels. Switching dragging to off will prevent panning and setting the min and maz zoom arguments will limit 
+```{r eval=FALSE}
+leaflet(options = 
+            leafletOptions(dragging = FALSE,
+                           minZoom = 14, 
+                           maxZoom = 18))  %>% 
+     addProviderTiles("CartoDB")  %>% 
+     setView(lng = -73.98575, lat = 40.74856, zoom = 18)
+```
+
+## Leaflet references
+- http://leafletjs.com/reference-1.3.0.html
+- https://rstudio.github.io/leaflet/
+
+## Restoring focus
+If users try to pan the map outside of the max bounds they will be automatically bounced back into the boundary.
+
+```{r}
+leaflet()  %>% 
+     addTiles()  %>% 
+     setView(lng = -73.98575, lat = 40.74856, zoom = 1) %>% 
+     setMaxBounds(lng1 = -73.98575, 
+                  lat1 = 40.74856, 
+                  lng2 = -73.98575, 
+                  lat2 = 40.74856)
+```
+
+## Plotting DataCamp HQ
+We have created maps with singple layer. To plot data on ou maps, we can add layers to the basemap similar to how you add a layer in ggplot2.
+
+### Supplying marker data
+One of the most common layers to add are location markers, which you can add by piling the result of `addTiles()` into the `addMarkers()` function. We will focus on two approaches
+1) use numeric columns from a data frame
+2) use numeric vectors with a length of 1
+
+When you add markers to your map without seeing the view, leaflet wiil automatically set the boundaries of the base map on the markers that you are plotting.If you are plotting a single marker, leaflet will center the map on that marker.
+
+### adMarkers() default
+1) centered on a single point
+2) zoomed to fit all points
+
+## Plottting multipe points
+If you want to add multiple points, you can use a `data frame` or `tibble` to pass te coordinates to the `addMarkers()` function.
+
+For example, to plot both DataCamp's New York and Belgium offices, we can 
+
+```{r}
+library(tidyverse)
+library(magrittr)
+
+dc_hq <- 
+  tibble(
+    hq=c("DataCamp-NYC","DataCamp-Belgium"),
+    lon=c(-73.985775,4.717863),
+    lat=c(40.74856,50.881363)
+  )
+dc_hq
+```
+
+```{r}
+leaflet() %>% 
+  addTiles() %>% 
+  addMarkers(lng=dc_hq$lon,lat=dc_hq$lat)
+```
+
+## Plotting multiple points II
+An alternative approach to mapping points from a data frame is to pipe the data.Then `addMarkers()` will search the columns names for names that are most likely your coordinates and the leaflet package 
+
+# Chapter2: Plotting points
+## Introduction to IPEDS Data
+
+We will build on the leaflet map that we created in the first chapter to make an interactive web map of every four-year college in California.
+
+After plotting hundreds of points on an interactive map, we will learn how to customize and color our markers.
+
+In chapter 1, we created a leaflet map using the `CartoDB` provider tile and plotted DataCamp's offcies by adding markers with pop-ups to our map.
+
+```{r include=FALSE}
+library(leaflet)
+library(magrittr)
+library(tidyverse)
+```
+
+### In the previous lecture
+
+```{r}
+leaflet() %>% 
+      addTiles() %>% 
+      addMarkers(lng = dc_hq$lon, lat = dc_hq$lat, popup = dc_hq$hq)
+```
+
+### Cleaning up the Base Map
+
+If we store our leaflet maps in objects, there will come a time when we need to remove markers or reset the map view.If we want to restore the default view without recreating the entire map, we can the `clearBounds()` function to remove the bounds we have applied to a leaflet map.
+
+- `clearMarkers()`- Remove one or more features from a map
+- `clearBounds()`- Clear bounds and automatically determine bounds based on map elements
+
+To remove the markers and to reset the bounds of our m map we would:
+```{r eval=FALSE}
+m <- m  %>% 
+        addMarkers(lng = dc_hq$lon, lat = dc_hq$lat) %>% 
+        setView(lat = 50.9, lng = 4.7, zoom = 5)
+
+m  %>% 
+    clearMarkers() %>% 
+    clearBounds()
+```
+
+```{r}
+# create a map object named "m"
+m <- leaflet() %>% 
+  addTiles()%>% 
+  addMarkers(lng = dc_hq$lon, lat = dc_hq$lat, popup = dc_hq$hq) %>% 
+  setView(lat=50.881363,
+          lng=4.717863,
+          zoom=5)
+m
+```
+
+```{r}
+# Restore view based on data displayed on a map
+m %>% 
+  clearBounds()
+```
+
+If we want to go to a step further and remove the markers, we can use the `clearMarkers()` function.
+```{r}
+m %>% 
+  clearBounds() %>% 
+  clearMarkers()
+```
+
+### IPEDS
+IPEDS refers to integrated postsecondary education data system (IPEDS), is a system of interrelated surveys conducted by the US department of Education's National center for Education  Statistics (Administered by National Center for Education Statistics (NCES)).
+
+IPEDS gathers data from all institutions participating in federal student financial aid programs:
+- collegs
+- universities
+- technical and vocational institutions
+
+We will be using a subset of data from IPEDS that focuses on four-year colleges and universities.The data has five variables
+1) the name oft each institution
+2) longtitude
+3) latitude
+4) state
+5) sector_label: sector of each college (public, private, for-profit)
+```{r include=FALSE}
+library(readxl)
+library(tidyverse)
+library(magrittr)
+library(leaflet)
+```
+
+
+```{r }
+ipeds <- read.csv("C:/Users/kojikm.mizumura/Desktop/Data Science/Interactive mapping with Leaflet by R/ipeds.csv")
+str(ipeds)
+head(ipeds)
+```
+
+```{r eval=FALSE}
+ipeds %>% 
+  group_by(state) %>% 
+  count() %>% 
+  arrange(desc(n))
+```
+
+In this chapter,we will 
+- filter the data to California
+- map all of the colleges in California
+- Use circle markers instead of pins
+- Color our markers by sector
+
+## Mapping California colleges
+1) Q1 How many 4-year colleges are there in Maine?
+```{r}
+maine_colleges <- 
+  ipeds %>% 
+  filter(state=="ME")
+# # A tibble: 21 x 5
+#                      name       lng      lat state sector_label
+#                     <chr>     <dbl>    <dbl> <chr>        <chr>
+# 1           Bates College -70.20333 44.10530    ME      Private
+# 2         Bowdoin College -69.96524 43.90690    ME      Private
+# 3           Colby College -69.66337 44.56421    ME      Private
+# 4 College of the Atlantic -68.22885 44.39958    ME      Private
+```
+
+Perhaps, a more interesting question is how are these 21 colleges distributed through the state? We will create a map.
+
+When we pass our data on Maine's college to `addMarkers` leflet tells us that it has automatically identified the variables that represent our coordinates.
+
+```{r }
+maine_colleges_map <- 
+  leaflet() %>% 
+  addProviderTiles("CartoDB") %>% 
+  addMarkers(data=maine_colleges)
+
+# leaflet() %>%
+#   addProviderTiles("CartoDB") %>%
+#   addMarkers(data=maine_colleges)
+```
+
+Using these coordinates, leaflet creats a map that is zoomed out to Maine by default. This reveals that 19 of Maine's 21 four-year collegs are in the Southern half of the state.
+
+```{r eval=FALSE}
+maine_colleges_map <- 
+  leaflet() %>% 
+  addProviderTiles("CartoDB") %>%
+  addMarkers(data=maine_colleges)
+```
+
+This clustering of colleges leads to some overlapping of the pin markers.When we make maps with markers that are clustered together, pin markers rendered by `addMarkers()` can overlap and obscure our data.
+
+One alternative function is to use the addCircleMarkers() function.Why are the pin markers still showing up on our map?
+```{r}
+# adding more markers will not remove existing 
+maine_colleges_map %>%
+  addCircleMarkers(data=maine_colleges)
+```
+
+Remember each set of markers are their own layer, so adding a new set will not replace the existing ones.Often it is desirable to add different types of markers to a map to identify different types of data, however, this is not one of those times, so we need to clear the pins prior to adding the circle markers.
+```{r}
+maine_colleges_map %>% 
+   clearMarkers() %>% 
+   addCircleMarkers(data = maine_colleges, 
+                    radius = 3)
+```
+
+This approach renders a map with blue circule markers with a radius of 3 representing the location of Maine's 21 four-year colleges.
+
+We can customize several aspects of our circule markers.
+```{r}
+maine_colleges_map <- 
+  maine_colleges_map %>% 
+   clearMarkers %>% 
+   addCircleMarkers(
+        data = maine_colleges, 
+           radius = 3)
+```
+
+For example we can control the radius and the color of the circles.
+```{r}
+maine_colleges_map %>% 
+  addCircleMarkers(
+           data = maine_colleges, 
+           radius = 4,
+           color = "red",
+           popup = ~name)
+```
+
+## Exercises
+### California College
+Now it is your turn to map all of the colleges in a state. In this exercise, we'll apply our example of mapping Maine's colleges to California's colleges. The first step is to set up your data by filtering the **ipeds** data frame to include only colleges in California. For reference, you will find how we accomplished this with the colleges in Maine below.
+```{r eval=FALSE}
+maine_colleges <- 
+    ipeds %>% 
+        filter(state == "ME")
+
+maine_colleges
+
+# A tibble: 21 x 5
+                     name       lng      lat state sector_label
+                    <chr>     <dbl>    <dbl> <chr>        <chr>
+1           Bates College -70.20333 44.10530    ME      Private
+2         Bowdoin College -69.96524 43.90690    ME      Private
+```
+
+#### AddMarkers
+```{r }
+# Create a dataframe called `ca` with data on only colleges in California
+head(ipeds)
+
+library(dplyr)
+ca <- ipeds %>%
+        filter(state=="CA")
+# Use `addMarkers` to plot all of the colleges in `ca` on the `m` leaflet map
+# map %>%
+#     addMarkers(lng = ca$lng, lat = ca$lat)
+```
+
+### Center the map on LA
+```{r}
+
+# define coordinates
+la_coords <- data.frame(lat = 34.05223, lon = -118.2437) 
+
+# Center the map on LA 
+map <- 
+  leaflet() %>% 
+  addTiles()
+
+# map %>% 
+#    addMarkers(data = ca) %>% 
+#     setView(lat = la_coords$lat, lng = la_coords$lon, zoom = 12)
+```
+
+### Set the zoom level
+Based on our map of California colleges it appears that there is a cluster of colleges in and around the City of Angels (e.g., Los Angeles). Let's take a closer look at these institutions on our `leaflet` map.
+
+The coordinates for the center of LA are provided for you in the `la_coords` data frame.
+
+la_coords <- data.frame(lat = 34.05223, lon = -118.2437) 
+Once you create a map focused on LA, try panning and zooming the map. Can you find the cluster of colleges East of LA known as the Claremont Colleges?
+
+When there are hundreds of markers, do you find the pin markers helpful or do they get in your way?
+
+The coordinates of LA have been provided in the `la_coords` data frame and the `ca` data frame of California colleges and the `map` have been loaded.
+
+```{r}
+# Set the zoom level to 8 and store in the m object
+map_zoom <- 
+    map %>% 
+      addMarkers(data = ca) %>% 
+      setView(lat = la_coords$lat, lng = la_coords$lon, zoom = 8)
+      
+map_zoom
+```
+
+Clear markers from the map 
+```{r}
+map2 <- map %>% 
+            clearMarkers()
+```
+
+
+### Add circle markers 
+Circle markers are notably different from pin markers:
+- We can control their size
+- They do not "stand-up" on the map
+- We can more easily change their color
+
+There are many ways to customize circle markers and the design of your `leaflet` map. To get started we will focus on the following arguments.
+```{r eval=FALSE}
+addCircleMarkers(map, lng = NULL, lat = NULL, 
+                 radius = 10, color = "#03F", popup = NULL)
+```
+
+The first argument map takes a `leaflet` object, which we will pipe directly into `addCircleMarkers()`. `lng` and `lat` are the coordinates we are mapping. The other arguments can customize the appearance and information presented by each marker.
+
+The ca data frame and the leaflet object map have been loaded for you.
+```{r}
+# Change the radius of each circle to be 2 pixels and the color to red
+map %>% 
+    addCircleMarkers(lng = ca$lng, lat = ca$lat,
+                     radius = 2, color = "red")
+```
+
+### Lables nad pop-ups
+How to add these features efficiently - 
+
+The approach on the left pipes our data into the leaflet() functiion. This is more readable.
+```{r Good example}
+ipeds %>% 
+ leaflet() %>% 
+ addTiles() %>% 
+  # addProviderTiles("CartoDB") %>% 
+ addCircleMarkers(
+  lng = ~lng, lat = ~lat, 
+  popup = ~name, color = "#FF0000")
+```
+
+```{r}
+# ipeds is specified 3 times
+head(ipeds[,-1])
+
+leaflet() %>% 
+addTiles() %>% 
+# addProviderTiles("CartoDB") %>% 
+addCircleMarkers(
+ lng = ipeds$lng, lat = ipeds$lat, 
+ popup = ipeds$name, color = "red")
+```
+
+All the colors 
+Thats not a new cool hashtag we haven't head of, it's a hex code.Hex code uses base 16 rather than base 10.This allows two digits represent a number that in the more commmon decimal system ranges from 0 to 255.
+```{r}
+ipeds %>% 
+  leaflet() %>% 
+  addTiles() %>% 
+  addCircleMarkers(
+    lng=~lng,
+    lat=~lat,
+    popup = ~name,
+    color="#FF0000"
+  )
+```
+
+### Building a better pop-up
+
+```{r eval=FALSE}
+addCircleMarkers(popup = ~name)
+addCircleMarkers(popup = ~paste0(name, "-", sector_label)
+
+addCircleMarkers(popup = ~paste0("<b>",name,"</b>","<br/>",sector_label))
+```
+
+### Labels
+Pop-ups are great, but they require a little extra work and sometimes we don't want to click the mouse again. When we use labels, we get the same info with a simple hover.
+
+Similar to building a plot with `ggplot2` or manipulating data with `dplyr`, your map needs to be stored in an object if you reference it later in your code.
+
+Speaking of dplyr, the **%>%** operator can pipe data into the function chain that creates a leaflet map.
+```{r eval=FALSE}
+ipeds %>% 
+    leaflet()  %>% 
+        addTiles() %>% 
+        addCircleMarkers(popup = ~name, color = "#FF0000")
+```
+
+Piping makes our code more readable and allows us to refer to variables using the `~` operator rather than repeatedly specifying the data frame.
+
+The color argument in `addCircleMarkers()` takes the name of a color or a hex code. For example, red or #FF0000.
+
+```{r}
+# Add circle markers with popups for college names
+
+library(leaflet)
+head(ca)
+names(ca)
+
+map %>% 
+    addCircleMarkers(data = ca, radius = 2, popup = ~name)
+
+map_color <- map %>% 
+    addCircleMarkers(data = ca, radius = 2, color = "#2cb42c", popup = ~name)
+
+map_color
+```
+
+With the `paste0()` function and a few html tags, we can customize our popups. `paste0()` converts its arguments to characters and combines them into a single string without separating the arguments.
+
+We can use the `<br/>` tag to create a line break to have each element appear on a separate line.
+
+To distinguish different data elements, we can make the name of each college italics by wrapping the name variable in `
+
+```{r}
+# Clear the bounds and markers on the map object and store in map2
+map
+map2 <- map %>% 
+            clearBounds() %>% 
+            clearMarkers()
+
+# Add circle markers with popups that display both the institution name and sector
+map2 %>% 
+    addCircleMarkers(data = ca, radius = 2, 
+                     popup = ~paste0(name, "<br/>", sector_label))
+```
+
+### Building a better pop-up
+```{r}
+# Make the institution name in each popup bold
+map2 %>% 
+    addCircleMarkers(data = ca, radius = 2, 
+                     popup = ~paste0("<b>", name, "</b>", "<br/>", sector_label))
+```
+
+### Swapping pop-up for labels
+```{r}
+# Use paste0 to add sector information to the label inside parentheses 
+
+head(ca)
+
+map %>% 
+    addCircleMarkers(data = ca, radius = 2, label = ~paste0(name, " (", sector_label, ")"))
+```
+
+## Color coding colleges
+We colored our points to style the map in the previous section, but we will add both style and information to our map using color.
+
+Adding color (and information)
+
+There are only four colleges scattered throughout the rest of the state.Color coding the markers by sector reveals that these four colleges are all the same sector:
+
+Do you think the colleges are public? Add a legend to pur map, tells us that these outlying colleges are public and institutions. It's often the case that when there is a college in rural America, it's a public institution. 
+
+```{r}
+
+OR <- ipeds %>% 
+        filter(state == "OR")
+pal <- colorFactor(palette = c("lime green", "light blue", "#9b4a11"), 
+                   levels = c("Public", "Private", "For-Profit"))
+
+oregon_colleges <- 
+    OR %>% 
+      leaflet() %>% 
+        addTiles() %>% 
+        addCircleMarkers(radius = 2,
+                         color = ~pal(sector_label),
+                         label = ~name)
+```
+
+Lastly, we add a legend using the `addLegend()` function so that we can remember what the colors represent.
+
+```{r}
+oregon_colleges %>%
+    addLegend(position = "bottomright",
+              pal = pal,
+              values = c("Public", "Private", "For-Profit"))
+```
+
+If we want to color points by a continous variable, instead of a factor, we can use the `colorNumeric()` function. For example, let's build a map of every college in America that admitted half or fewer of its applicants in 2016.
+
+1) We create our data that excludes colleges with admit rates of 50 percent or higher and colleges that did not admit anyone. 
+
+```{r}
+admit <- admit %>% 
+            filter(!is.na(rate),
+                   rate < 50, 
+                   rate > 0)
+```
+
+2) Then we can make our pallete using a red color gradient that has a domain that matches the range of admit rates in our data.
+```{r}
+ pal <- colorNumeric(palette = "Reds", domain = c(1:50), reverse = TRUE)
+```
+
+Setting reverse to true will flip the gradient, so smaller values are represented by darker shades of red, which will make more selective colleges easier to spot on our map.
+
+Lastly, we add a legend.
+```{r}
+admit_map <- 
+    admit %>% 
+      leaflet() %>% 
+      addTiles()  %>% 
+      addCircleMarkers(radius = 4, color = ~pal(rate), label = ~name)  %>%
+      addLegend(title = "Admit Rate", pal = pal, values = c(1:50), 
+            position = "bottomright")
+```
+
+### Picking a color palette
+```{r}
+## see http://colorbrewer2.org/ for interactive examples
+library(RColorBrewer)
+display.brewer.all()
+```
+
+## Exercise
+### Creating a Color Palette using colorFactor
+```{r}
+# Make a color palette called pal for the values of `sector_label` using `colorFactor()`  
+# Colors should be: "red", "blue", and "#9b4a11" for "Public", "Private", and "For-Profit" colleges, respectively
+pal <- colorFactor(palette = c("red", "blue","#9b4a11"), 
+levels=c("Public","Private","For-Profit"))
+
+# Add circle markers that color colleges using pal() and the values of sector_label
+map2 <- 
+    map %>% 
+        addCircleMarkers(data = ca, radius = 2, 
+                         color = ~pal(sector_label), 
+                         label = ~paste0(name, " (", sector_label, ")"))
+
+# Print map2
+map2
+```
+
+### Legendary map
+```{r}
+# Customize the legend
+m %>% 
+    addLegend(pal = pal, 
+              values = c("Public", "Private", "For-Profit"),
+              # opacity of .5, title of Sector, and position of topright
+              opacity = 0.5, title = "Sector", position = "topright")
+```
+
+# Chapter 3
+## Leaflet extra package
+```{r}
+library(RSelenium)
+remoteDriver()
+```
+
+
