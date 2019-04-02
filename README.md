@@ -1,4 +1,4 @@
-# Udemy Courses
+## Udemy Courses
 
 1. R Level 1 -  
 From 2018 January
@@ -11,6 +11,8 @@ From 2018 April to July
 
 4. Applied time series analysis 
 From 2018 July - August (fin)  
+
+## Data Camp  
 
 5. ML in Tidyverse   
 This tutorial was reviewed on March, 2019, offered by DataCamp.
