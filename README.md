@@ -16,5 +16,9 @@ From 2018 July - August (fin)
 
 5. ML in Tidyverse   
 This tutorial was reviewed on March, 2019, offered by DataCamp.
-The tutorail covers purrr (map, pmap, map2) and nest/unnest() functions to deal with list-columns in tidyverse way.  
+The tutorail covers `purrr` (`map`, `pmap`, `map2`) and nest/unnest() functions to deal with list-columns in tidyverse way.  
 https://www.datacamp.com/courses/machine-learning-in-the-tidyverse  
+
+6. Dealing with missing data  
+This tutorail was reviewd on April, 2019, offered by DataCamp.  
+This totorial covers NA value visualization and imputation by `naniar` and `simputation` packages.  
